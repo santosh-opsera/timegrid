@@ -20,6 +20,11 @@ if [ -n "$DATABASE_URL" ]; then
     export DB_PASSWORD=$(echo "$DATABASE_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
 fi
 
+# Create SQLite database if using sqlite driver
+if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
+    touch database/database.sqlite
+fi
+
 # Generate app key if not set
 if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
@@ -34,8 +39,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run database migrations (don't fail startup if DB isn't ready yet)
-php artisan migrate --force || echo "WARNING: Migration failed — set DATABASE_URL or DB_PASSWORD and redeploy"
+# Run database migrations
+php artisan migrate --force || echo "WARNING: Migration failed"
 
 # Create storage symlink if missing
 php artisan storage:link 2>/dev/null || true
