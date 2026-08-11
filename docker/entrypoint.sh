@@ -25,7 +25,7 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 # Render Nginx config with dynamic PORT
-sed "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
+sed "s/\${PORT}/$PORT/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 # Ensure storage permissions
 chown -R www-data:www-data storage bootstrap/cache

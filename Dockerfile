@@ -1,20 +1,24 @@
-# Legacy TimeGrid — Laravel 5.3 on PHP 7.4
-FROM php:7.4-fpm-alpine
+# Legacy TimeGrid — Laravel 5.3 on PHP 7.1
+FROM php:7.1-fpm-alpine
 
 RUN apk add --no-cache \
     nginx \
     supervisor \
     curl \
-    libzip-dev \
-    oniguruma-dev \
+    zlib-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
     icu-dev \
-    sqlite-dev
+    sqlite-dev \
+    autoconf \
+    g++ \
+    make
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
+RUN docker-php-ext-configure gd \
+        --with-freetype-dir=/usr/include/ \
+        --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     pdo_sqlite \
     mbstring \
@@ -25,7 +29,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     opcache \
     tokenizer
 
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" 2>/dev/null || true
 
 RUN echo "opcache.enable=1" >> "$PHP_INI_DIR/conf.d/opcache.ini" \
     && echo "opcache.memory_consumption=128" >> "$PHP_INI_DIR/conf.d/opcache.ini" \
@@ -52,8 +56,8 @@ RUN rm -rf node_modules tests .env .env.travis \
     && mkdir -p storage/app/public \
     && mkdir -p bootstrap/cache
 
-COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
-COPY docker/nginx/default.conf.template /etc/nginx/http.d/default.conf.template
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/default.conf.template /etc/nginx/conf.d/default.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
