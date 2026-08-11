@@ -23,6 +23,8 @@ fi
 # Create SQLite database if using sqlite driver
 if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
     touch database/database.sqlite
+    chown www-data:www-data database/database.sqlite
+    chmod 664 database/database.sqlite
 fi
 
 # Generate app key if not set
