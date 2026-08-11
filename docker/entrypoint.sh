@@ -30,12 +30,15 @@ fi
     echo "MAIL_DRIVER=log"
 } > .env
 
-# Generate app key if not set
-if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "changeme" ]; then
-    php artisan key:generate --force 2>&1 || true
-    APP_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
-    export APP_KEY
-fi
+# Generate a valid Laravel APP_KEY (must start with base64:)
+case "$APP_KEY" in
+    base64:*) ;; # Already a valid Laravel key
+    *)
+        php artisan key:generate --force 2>&1 || true
+        APP_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
+        export APP_KEY
+        ;;
+esac
 
 # Render Nginx config with dynamic PORT
 sed "s/\${PORT}/$PORT/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
