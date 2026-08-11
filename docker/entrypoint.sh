@@ -34,8 +34,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run database migrations
-php artisan migrate --force
+# Run database migrations (don't fail startup if DB isn't ready yet)
+php artisan migrate --force || echo "WARNING: Migration failed — set DATABASE_URL or DB_PASSWORD and redeploy"
 
 # Create storage symlink if missing
 php artisan storage:link 2>/dev/null || true
