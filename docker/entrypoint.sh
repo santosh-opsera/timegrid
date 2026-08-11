@@ -5,6 +5,11 @@ cd /var/www
 
 export PORT="${PORT:-8080}"
 
+# Create .env from example if missing (needed for artisan commands)
+if [ ! -f .env ]; then
+    cp .env.example .env 2>/dev/null || touch .env
+fi
+
 # Parse DATABASE_URL if provided (Render, Railway, etc.)
 if [ -n "$DATABASE_URL" ]; then
     export DB_CONNECTION="pgsql"
@@ -18,6 +23,7 @@ fi
 # Generate app key if not set
 if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
+    export APP_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
 fi
 
 # Render Nginx config with dynamic PORT
