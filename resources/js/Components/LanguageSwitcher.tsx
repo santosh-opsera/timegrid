@@ -15,7 +15,7 @@ export default function LanguageSwitcher({ className = '' }: { className?: strin
 
     const switchLocale = (code: string) => {
         setOpen(false);
-        router.get(`/lang/${code}`, {}, { preserveState: true, preserveScroll: true });
+        window.location.href = `/lang/${code}`;
     };
 
     return (
