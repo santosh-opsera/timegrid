@@ -59,7 +59,8 @@ COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN mkdir -p /run/nginx \
+    && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 8080
 
