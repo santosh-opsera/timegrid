@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import { Appointment, Business } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -23,6 +24,7 @@ function formatStatus(status: string): string {
 }
 
 export default function Confirmation({ business, appointment }: ConfirmationProps) {
+    const { t } = useTrans();
     const contact = appointment.contact;
     const service = appointment.service;
 
@@ -59,42 +61,42 @@ export default function Confirmation({ business, appointment }: ConfirmationProp
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <h2 className="mt-4 text-2xl font-bold text-gray-900">Booking Confirmed!</h2>
+                            <h2 className="mt-4 text-2xl font-bold text-gray-900">{t('confirmation.title')}</h2>
                             <p className="mt-2 text-sm text-gray-500">
-                                Your appointment has been scheduled. We look forward to seeing you.
+                                {t('confirmation.subtitle')}
                             </p>
                         </div>
 
                         <div className="mt-8 space-y-6">
                             <section>
                                 <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                    Appointment
+                                    {t('confirmation.appointment')}
                                 </h3>
                                 <dl className="mt-3 divide-y divide-gray-100 rounded-xl border border-gray-200">
                                     <div className="flex justify-between px-4 py-3">
-                                        <dt className="text-sm text-gray-500">Business</dt>
+                                        <dt className="text-sm text-gray-500">{t('confirmation.business')}</dt>
                                         <dd className="text-sm font-medium text-gray-900">{business.name}</dd>
                                     </div>
                                     {service && (
                                         <div className="flex justify-between px-4 py-3">
-                                            <dt className="text-sm text-gray-500">Service</dt>
+                                            <dt className="text-sm text-gray-500">{t('confirmation.service')}</dt>
                                             <dd className="text-sm font-medium text-gray-900">{service.name}</dd>
                                         </div>
                                     )}
                                     <div className="flex justify-between px-4 py-3">
-                                        <dt className="text-sm text-gray-500">Date & time</dt>
+                                        <dt className="text-sm text-gray-500">{t('confirmation.date_time')}</dt>
                                         <dd className="text-right text-sm font-medium text-gray-900">
                                             {formatDateTime(appointment.start_at)}
                                         </dd>
                                     </div>
                                     <div className="flex justify-between px-4 py-3">
-                                        <dt className="text-sm text-gray-500">Duration</dt>
+                                        <dt className="text-sm text-gray-500">{t('confirmation.duration')}</dt>
                                         <dd className="text-sm font-medium text-gray-900">
-                                            {appointment.duration} min
+                                            {appointment.duration} {t('booking.min')}
                                         </dd>
                                     </div>
                                     <div className="flex justify-between px-4 py-3">
-                                        <dt className="text-sm text-gray-500">Status</dt>
+                                        <dt className="text-sm text-gray-500">{t('confirmation.status')}</dt>
                                         <dd>
                                             <span className="inline-flex rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
                                                 {formatStatus(appointment.status)}
@@ -107,24 +109,24 @@ export default function Confirmation({ business, appointment }: ConfirmationProp
                             {contact && (
                                 <section>
                                     <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        Contact details
+                                        {t('confirmation.contact_details')}
                                     </h3>
                                     <dl className="mt-3 divide-y divide-gray-100 rounded-xl border border-gray-200">
                                         <div className="flex justify-between px-4 py-3">
-                                            <dt className="text-sm text-gray-500">Name</dt>
+                                            <dt className="text-sm text-gray-500">{t('confirmation.name')}</dt>
                                             <dd className="text-sm font-medium text-gray-900">
                                                 {[contact.firstname, contact.lastname].filter(Boolean).join(' ')}
                                             </dd>
                                         </div>
                                         {contact.email && (
                                             <div className="flex justify-between px-4 py-3">
-                                                <dt className="text-sm text-gray-500">Email</dt>
+                                                <dt className="text-sm text-gray-500">{t('confirmation.email')}</dt>
                                                 <dd className="text-sm font-medium text-gray-900">{contact.email}</dd>
                                             </div>
                                         )}
                                         {contact.phone && (
                                             <div className="flex justify-between px-4 py-3">
-                                                <dt className="text-sm text-gray-500">Phone</dt>
+                                                <dt className="text-sm text-gray-500">{t('confirmation.phone')}</dt>
                                                 <dd className="text-sm font-medium text-gray-900">{contact.phone}</dd>
                                             </div>
                                         )}
@@ -138,7 +140,7 @@ export default function Confirmation({ business, appointment }: ConfirmationProp
                                 href="/"
                                 className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                             >
-                                Back to Home
+                                {t('confirmation.back_home')}
                             </Link>
                         </div>
                     </div>

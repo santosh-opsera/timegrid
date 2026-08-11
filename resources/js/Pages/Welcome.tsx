@@ -1,3 +1,5 @@
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, User } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -7,6 +9,8 @@ interface WelcomeProps {
 }
 
 export default function Welcome({ auth, businesses }: WelcomeProps) {
+    const { t } = useTrans();
+
     return (
         <>
             <Head title="TimeGrid — Book appointments online" />
@@ -20,12 +24,13 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                         </Link>
 
                         <nav className="flex items-center gap-3">
+                            <LanguageSwitcher />
                             {auth.user ? (
                                 <Link
                                     href={route('dashboard')}
                                     className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                                 >
-                                    Dashboard
+                                    {t('nav.dashboard')}
                                 </Link>
                             ) : (
                                 <>
@@ -33,13 +38,13 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                                         href={route('login')}
                                         className="rounded-lg px-4 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-50"
                                     >
-                                        Log in
+                                        {t('nav.log_in')}
                                     </Link>
                                     <Link
                                         href={route('register')}
                                         className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                                     >
-                                        Register
+                                        {t('nav.register')}
                                     </Link>
                                 </>
                             )}
@@ -56,24 +61,24 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                             TimeGrid
                         </h1>
                         <p className="mt-4 text-lg text-gray-600 sm:text-xl">
-                            Book appointments online, effortlessly
+                            {t('welcome.tagline')}
                         </p>
                         <p className="mt-6 text-base text-gray-500">
-                            Discover local businesses, pick a service, and schedule your next visit in minutes.
+                            {t('welcome.subtitle')}
                         </p>
                         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                             <Link
                                 href={route('directory')}
                                 className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                             >
-                                Browse all businesses
+                                {t('welcome.browse_all')}
                             </Link>
                             {!auth.user && (
                                 <Link
                                     href={route('register')}
                                     className="rounded-lg border border-indigo-200 bg-white px-6 py-3 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
                                 >
-                                    Get started free
+                                    {t('welcome.get_started')}
                                 </Link>
                             )}
                         </div>
@@ -83,20 +88,20 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                 <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
                     <div className="mb-8 flex items-end justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">Featured Businesses</h2>
-                            <p className="mt-1 text-gray-500">Popular places ready to take your booking</p>
+                            <h2 className="text-2xl font-bold text-gray-900">{t('welcome.featured')}</h2>
+                            <p className="mt-1 text-gray-500">{t('welcome.featured_subtitle')}</p>
                         </div>
                         <Link
                             href={route('directory')}
                             className="hidden text-sm font-medium text-indigo-600 hover:text-indigo-700 sm:block"
                         >
-                            View all →
+                            {`${t('welcome.view_all')} →`}
                         </Link>
                     </div>
 
                     {businesses.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-                            <p className="text-gray-500">No businesses listed yet. Check back soon!</p>
+                            <p className="text-gray-500">{t('welcome.no_businesses')}</p>
                         </div>
                     ) : (
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -121,8 +126,9 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                                         )}
                                         {business.services_count !== undefined && (
                                             <p className="mt-3 text-xs text-gray-400">
-                                                {business.services_count} service
-                                                {business.services_count !== 1 ? 's' : ''} available
+                                                {business.services_count}{' '}
+                                                {business.services_count !== 1 ? t('dashboard.services') : 'service'}{' '}
+                                                available
                                             </p>
                                         )}
                                     </div>
@@ -130,7 +136,7 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                                         href={`/book/${business.slug}`}
                                         className="mt-4 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                                     >
-                                        Book Now
+                                        {t('welcome.book_now')}
                                     </Link>
                                 </div>
                             ))}
@@ -139,7 +145,7 @@ export default function Welcome({ auth, businesses }: WelcomeProps) {
                 </section>
 
                 <footer className="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-500">
-                    © {new Date().getFullYear()} TimeGrid. All rights reserved.
+                    © {new Date().getFullYear()} TimeGrid. {t('welcome.footer')}
                 </footer>
             </div>
         </>

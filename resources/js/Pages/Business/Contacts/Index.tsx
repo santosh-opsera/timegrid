@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, Contact } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function Index({ business, contacts }: Props) {
+    const { t } = useTrans();
     const [editingId, setEditingId] = useState<number | null>(null);
 
     const createForm = useForm({
@@ -76,18 +78,18 @@ export default function Index({ business, contacts }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Contacts — {business.name}
+                        {`${t('contacts.title')} — ${business.name}`}
                     </h2>
                     <Link
                         href={route('businesses.show', business.slug)}
                         className="text-sm text-gray-600 hover:text-gray-800"
                     >
-                        ← Back to Dashboard
+                        {`← ${t('common.back_dashboard')}`}
                     </Link>
                 </div>
             }
         >
-            <Head title={`Contacts — ${business.name}`} />
+            <Head title={`${t('contacts.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-5xl space-y-8 sm:px-6 lg:px-8">
@@ -95,10 +97,10 @@ export default function Index({ business, contacts }: Props) {
                         onSubmit={submitCreate}
                         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                     >
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Add Contact</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('contacts.add_contact')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="firstname" value="First Name" />
+                                <InputLabel htmlFor="firstname" value={t('form.first_name')} />
                                 <TextInput
                                     id="firstname"
                                     className="mt-1 block w-full"
@@ -109,7 +111,7 @@ export default function Index({ business, contacts }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.firstname} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="lastname" value="Last Name" />
+                                <InputLabel htmlFor="lastname" value={t('form.last_name')} />
                                 <TextInput
                                     id="lastname"
                                     className="mt-1 block w-full"
@@ -119,7 +121,7 @@ export default function Index({ business, contacts }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.lastname} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="email" value="Email" />
+                                <InputLabel htmlFor="email" value={t('form.email')} />
                                 <TextInput
                                     id="email"
                                     type="email"
@@ -130,7 +132,7 @@ export default function Index({ business, contacts }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.email} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="phone" value="Phone" />
+                                <InputLabel htmlFor="phone" value={t('form.phone')} />
                                 <TextInput
                                     id="phone"
                                     className="mt-1 block w-full"
@@ -140,7 +142,7 @@ export default function Index({ business, contacts }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.phone} />
                             </div>
                             <div className="sm:col-span-2">
-                                <InputLabel htmlFor="notes" value="Notes" />
+                                <InputLabel htmlFor="notes" value={t('form.notes')} />
                                 <textarea
                                     id="notes"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -152,7 +154,7 @@ export default function Index({ business, contacts }: Props) {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <PrimaryButton disabled={createForm.processing}>Add Contact</PrimaryButton>
+                            <PrimaryButton disabled={createForm.processing}>{t('contacts.add_contact')}</PrimaryButton>
                         </div>
                     </form>
 
@@ -161,22 +163,22 @@ export default function Index({ business, contacts }: Props) {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        First Name
+                                        {t('form.first_name')}
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        Last Name
+                                        {t('form.last_name')}
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        Email
+                                        {t('form.email')}
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        Phone
+                                        {t('form.phone')}
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                        Notes
+                                        {t('form.notes')}
                                     </th>
                                     <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                                        Actions
+                                        {t('common.actions')}
                                     </th>
                                 </tr>
                             </thead>
@@ -187,7 +189,7 @@ export default function Index({ business, contacts }: Props) {
                                             colSpan={6}
                                             className="px-4 py-6 text-center text-sm text-gray-500"
                                         >
-                                            No contacts yet.
+                                            {t('contacts.no_contacts')}
                                         </td>
                                     </tr>
                                 ) : (
@@ -244,12 +246,12 @@ export default function Index({ business, contacts }: Props) {
                                                     </td>
                                                     <td className="px-4 py-3 text-right">
                                                         <form onSubmit={submitEdit} className="inline-flex gap-2">
-                                                            <PrimaryButton type="submit">Save</PrimaryButton>
+                                                            <PrimaryButton type="submit">{t('common.save')}</PrimaryButton>
                                                             <SecondaryButton
                                                                 type="button"
                                                                 onClick={() => setEditingId(null)}
                                                             >
-                                                                Cancel
+                                                                {t('common.cancel')}
                                                             </SecondaryButton>
                                                         </form>
                                                     </td>
@@ -276,13 +278,13 @@ export default function Index({ business, contacts }: Props) {
                                                             onClick={() => startEdit(contact)}
                                                             className="mr-2 text-indigo-600 hover:text-indigo-800"
                                                         >
-                                                            Edit
+                                                            {t('common.edit')}
                                                         </button>
                                                         <button
                                                             onClick={() => deleteContact(contact)}
                                                             className="text-red-600 hover:text-red-800"
                                                         >
-                                                            Delete
+                                                            {t('common.delete')}
                                                         </button>
                                                     </td>
                                                 </>

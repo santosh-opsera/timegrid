@@ -1,3 +1,4 @@
+import { useTrans } from '@/hooks/useTrans';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Appointment, Business, PageProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -40,52 +41,51 @@ function contactName(appointment: Appointment): string {
 
 export default function Dashboard({ businesses, upcomingAppointments, isOwner }: DashboardProps) {
     const { auth } = usePage<PageProps>().props;
+    const { t } = useTrans();
 
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Dashboard
+                    {t('dashboard.title')}
                 </h2>
             }
         >
-            <Head title="Dashboard" />
+            <Head title={t('dashboard.title')} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl space-y-8 sm:px-6 lg:px-8">
                     <div>
                         <h3 className="text-lg font-medium text-gray-900">
-                            Welcome back, {auth.user.name}!
+                            {t('dashboard.welcome', { name: auth.user.name })}
                         </h3>
                         <p className="mt-1 text-sm text-gray-500">
-                            {isOwner
-                                ? 'Manage your businesses and upcoming appointments.'
-                                : 'View your upcoming appointments.'}
+                            {isOwner ? t('dashboard.manage_desc') : t('dashboard.view_desc')}
                         </p>
                     </div>
 
                     {isOwner && (
                         <section>
                             <div className="mb-4 flex items-center justify-between">
-                                <h4 className="text-base font-semibold text-gray-900">Your Businesses</h4>
+                                <h4 className="text-base font-semibold text-gray-900">{t('dashboard.your_businesses')}</h4>
                                 {businesses.length > 0 && (
                                     <Link
                                         href={route('businesses.create')}
                                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                                     >
-                                        + Create Business
+                                        {t('dashboard.create_business')}
                                     </Link>
                                 )}
                             </div>
 
                             {businesses.length === 0 ? (
                                 <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
-                                    <p className="text-gray-500">You don&apos;t have any businesses yet.</p>
+                                    <p className="text-gray-500">{t('dashboard.no_businesses')}</p>
                                     <Link
                                         href={route('businesses.create')}
                                         className="mt-4 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                                     >
-                                        Create Business
+                                        {t('dashboard.create_business_btn')}
                                     </Link>
                                 </div>
                             ) : (
@@ -97,22 +97,22 @@ export default function Dashboard({ businesses, upcomingAppointments, isOwner }:
                                         >
                                             <h5 className="font-semibold text-gray-900">{business.name}</h5>
                                             <div className="mt-2 flex gap-4 text-sm text-gray-500">
-                                                <span>{business.services_count ?? 0} services</span>
-                                                <span>{business.contacts_count ?? 0} contacts</span>
-                                                <span>{business.appointments_count ?? 0} appts</span>
+                                                <span>{business.services_count ?? 0} {t('dashboard.services')}</span>
+                                                <span>{business.contacts_count ?? 0} {t('dashboard.contacts')}</span>
+                                                <span>{business.appointments_count ?? 0} {t('dashboard.appts')}</span>
                                             </div>
                                             <div className="mt-4 flex gap-3">
                                                 <Link
                                                     href={route('businesses.show', business.slug)}
                                                     className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                                                 >
-                                                    Manage
+                                                    {t('dashboard.manage')}
                                                 </Link>
                                                 <Link
                                                     href={`/book/${business.slug}`}
                                                     className="text-sm font-medium text-gray-600 hover:text-gray-800"
                                                 >
-                                                    View booking page
+                                                    {t('dashboard.view_booking')}
                                                 </Link>
                                             </div>
                                         </div>
@@ -124,12 +124,12 @@ export default function Dashboard({ businesses, upcomingAppointments, isOwner }:
 
                     <section>
                         <h4 className="mb-4 text-base font-semibold text-gray-900">
-                            {isOwner ? 'Upcoming Appointments (Your Businesses)' : 'Your Upcoming Appointments'}
+                            {isOwner ? t('dashboard.upcoming_owner') : t('dashboard.upcoming_customer')}
                         </h4>
 
                         {upcomingAppointments.length === 0 ? (
                             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-                                No upcoming appointments.
+                                {t('dashboard.no_appointments')}
                             </div>
                         ) : (
                             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -168,7 +168,7 @@ export default function Dashboard({ businesses, upcomingAppointments, isOwner }:
                                 href={route('directory')}
                                 className="inline-flex rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
                             >
-                                Browse businesses & book
+                                {t('dashboard.browse_book')}
                             </Link>
                         </section>
                     )}

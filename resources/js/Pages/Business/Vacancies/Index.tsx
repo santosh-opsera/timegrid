@@ -2,6 +2,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, Service, Staff, Vacancy } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -36,6 +37,7 @@ function next14Days(): { date: string; label: string }[] {
 }
 
 export default function Index({ business, vacancies, services, staff }: Props) {
+    const { t } = useTrans();
     const [selectedDates, setSelectedDates] = useState<string[]>([]);
 
     const createForm = useForm({
@@ -98,18 +100,18 @@ export default function Index({ business, vacancies, services, staff }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Vacancies — {business.name}
+                        {`${t('vacancies.title')} — ${business.name}`}
                     </h2>
                     <Link
                         href={route('businesses.show', business.slug)}
                         className="text-sm text-gray-600 hover:text-gray-800"
                     >
-                        ← Back to Dashboard
+                        {`← ${t('common.back_dashboard')}`}
                     </Link>
                 </div>
             }
         >
-            <Head title={`Vacancies — ${business.name}`} />
+            <Head title={`${t('vacancies.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-4xl space-y-8 sm:px-6 lg:px-8">
@@ -117,10 +119,10 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                         onSubmit={submitCreate}
                         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                     >
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Add Vacancy</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('vacancies.add_vacancy')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="service_id" value="Service" />
+                                <InputLabel htmlFor="service_id" value={t('common.service')} />
                                 <select
                                     id="service_id"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -139,14 +141,14 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.service_id} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="staff_id" value="Staff (optional)" />
+                                <InputLabel htmlFor="staff_id" value={t('form.staff_optional')} />
                                 <select
                                     id="staff_id"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={createForm.data.staff_id}
                                     onChange={(e) => createForm.setData('staff_id', e.target.value)}
                                 >
-                                    <option value="">Any staff</option>
+                                    <option value="">{t('form.any_staff')}</option>
                                     {staff.map((member) => (
                                         <option key={member.id} value={member.id}>
                                             {member.name}
@@ -156,7 +158,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.staff_id} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="date" value="Date" />
+                                <InputLabel htmlFor="date" value={t('form.date')} />
                                 <input
                                     id="date"
                                     type="date"
@@ -169,7 +171,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <InputLabel htmlFor="start_time" value="Start Time" />
+                                    <InputLabel htmlFor="start_time" value={t('form.start_time')} />
                                     <input
                                         id="start_time"
                                         type="time"
@@ -183,7 +185,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                     <InputError className="mt-2" message={createForm.errors.start_time} />
                                 </div>
                                 <div>
-                                    <InputLabel htmlFor="end_time" value="End Time" />
+                                    <InputLabel htmlFor="end_time" value={t('form.end_time')} />
                                     <input
                                         id="end_time"
                                         type="time"
@@ -199,7 +201,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <PrimaryButton disabled={createForm.processing}>Add Vacancy</PrimaryButton>
+                            <PrimaryButton disabled={createForm.processing}>{t('vacancies.add_vacancy')}</PrimaryButton>
                         </div>
                     </form>
 
@@ -207,10 +209,10 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                         onSubmit={submitBulk}
                         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                     >
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Bulk Create</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('vacancies.bulk_create')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel value="Service" />
+                                <InputLabel value={t('common.service')} />
                                 <select
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={bulkForm.data.service_id}
@@ -227,13 +229,13 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                 </select>
                             </div>
                             <div>
-                                <InputLabel value="Staff (optional)" />
+                                <InputLabel value={t('form.staff_optional')} />
                                 <select
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     value={bulkForm.data.staff_id}
                                     onChange={(e) => bulkForm.setData('staff_id', e.target.value)}
                                 >
-                                    <option value="">Any staff</option>
+                                    <option value="">{t('form.any_staff')}</option>
                                     {staff.map((member) => (
                                         <option key={member.id} value={member.id}>
                                             {member.name}
@@ -242,7 +244,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                 </select>
                             </div>
                             <div>
-                                <InputLabel value="Start Time" />
+                                <InputLabel value={t('form.start_time')} />
                                 <input
                                     type="time"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -252,7 +254,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                 />
                             </div>
                             <div>
-                                <InputLabel value="End Time" />
+                                <InputLabel value={t('form.end_time')} />
                                 <input
                                     type="time"
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -264,7 +266,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                         </div>
 
                         <div className="mt-4">
-                            <InputLabel value="Select Dates (next 14 days)" />
+                            <InputLabel value={t('vacancies.select_dates')} />
                             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                                 {next14Days().map((day) => (
                                     <label
@@ -290,19 +292,19 @@ export default function Index({ business, vacancies, services, staff }: Props) {
 
                         <div className="mt-4">
                             <PrimaryButton disabled={bulkForm.processing || selectedDates.length === 0}>
-                                Create {selectedDates.length} Vacanc{selectedDates.length === 1 ? 'y' : 'ies'}
+                                {`${t('vacancies.add_vacancy')} (${selectedDates.length})`}
                             </PrimaryButton>
                         </div>
                     </form>
 
                     <section>
                         <h3 className="mb-4 text-base font-semibold text-gray-900">
-                            Upcoming Vacancies
+                            {t('vacancies.upcoming')}
                         </h3>
 
                         {Object.keys(grouped).length === 0 ? (
                             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-                                No upcoming vacancies.
+                                {t('vacancies.no_vacancies')}
                             </div>
                         ) : (
                             <div className="space-y-6">
@@ -345,7 +347,7 @@ export default function Index({ business, vacancies, services, staff }: Props) {
                                                         onClick={() => deleteVacancy(vacancy)}
                                                         className="text-sm text-red-600 hover:text-red-800"
                                                     >
-                                                        Delete
+                                                        {t('common.delete')}
                                                     </button>
                                                 </li>
                                             ))}

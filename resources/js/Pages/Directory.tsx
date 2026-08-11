@@ -1,3 +1,5 @@
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { useTrans } from '@/hooks/useTrans';
 import { Business } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -15,9 +17,11 @@ interface DirectoryProps {
 }
 
 export default function Directory({ businesses }: DirectoryProps) {
+    const { t } = useTrans();
+
     return (
         <>
-            <Head title="Business Directory" />
+            <Head title={t('directory.title')} />
 
             <div className="min-h-screen bg-gray-50">
                 <header className="border-b border-gray-200 bg-white">
@@ -26,26 +30,27 @@ export default function Directory({ businesses }: DirectoryProps) {
                             <span className="text-2xl">📅</span>
                             <span className="text-xl font-bold text-indigo-600">TimeGrid</span>
                         </Link>
+                        <LanguageSwitcher />
                         <Link
                             href={route('home')}
                             className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                         >
-                            ← Back to home
+                            ← {t('directory.back_home')}
                         </Link>
                     </div>
                 </header>
 
                 <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900">Business Directory</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">{t('directory.title')}</h1>
                         <p className="mt-2 text-gray-500">
-                            Browse all businesses and book your next appointment.
+                            {t('directory.subtitle')}
                         </p>
                     </div>
 
                     {businesses.data.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-                            <p className="text-gray-500">No businesses found.</p>
+                            <p className="text-gray-500">{t('directory.no_businesses')}</p>
                         </div>
                     ) : (
                         <>
@@ -80,7 +85,7 @@ export default function Directory({ businesses }: DirectoryProps) {
                                             href={`/book/${business.slug}`}
                                             className="mt-4 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                                         >
-                                            Book Now
+                                            {t('welcome.book_now')}
                                         </Link>
                                     </div>
                                 ))}

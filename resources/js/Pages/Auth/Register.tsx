@@ -3,10 +3,12 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 export default function Register() {
+    const { t } = useTrans();
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -25,11 +27,11 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Register" />
+            <Head title={t('auth.register')} />
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value={t('form.name')} />
 
                     <TextInput
                         id="name"
@@ -46,7 +48,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value={t('auth.email')} />
 
                     <TextInput
                         id="email"
@@ -63,7 +65,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value={t('auth.password')} />
 
                     <TextInput
                         id="password"
@@ -82,7 +84,7 @@ export default function Register() {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value={t('auth.confirm_password')}
                     />
 
                     <TextInput
@@ -105,7 +107,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel value="I want to" />
+                    <InputLabel value={t('auth.i_want_to')} />
 
                     <div className="mt-2 flex gap-4">
                         <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${data.role === 'customer' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
@@ -117,7 +119,7 @@ export default function Register() {
                                 onChange={() => setData('role', 'customer')}
                                 className="sr-only"
                             />
-                            Book appointments
+                            {t('auth.book_appointments')}
                         </label>
 
                         <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${data.role === 'owner' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
@@ -129,7 +131,7 @@ export default function Register() {
                                 onChange={() => setData('role', 'owner')}
                                 className="sr-only"
                             />
-                            List my business
+                            {t('auth.list_business')}
                         </label>
                     </div>
 
@@ -141,11 +143,11 @@ export default function Register() {
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Already registered?
+                        {t('auth.already_registered')}
                     </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                        {t('auth.register')}
                     </PrimaryButton>
                 </div>
             </form>

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Appointment, Business } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -43,16 +44,18 @@ function contactName(appointment: Appointment): string {
     return [appointment.contact.firstname, appointment.contact.lastname].filter(Boolean).join(' ');
 }
 
-const quickActions = [
-    { label: 'Services', route: 'businesses.services.index', icon: '🛎️' },
-    { label: 'Staff', route: 'businesses.staff.index', icon: '👥' },
-    { label: 'Contacts', route: 'businesses.contacts.index', icon: '📇' },
-    { label: 'Vacancies', route: 'businesses.vacancies.index', icon: '📅' },
-    { label: 'Agenda', route: 'businesses.agenda.index', icon: '📋' },
-    { label: 'Calendar', route: 'businesses.agenda.calendar', icon: '🗓️' },
-];
-
 export default function Show({ business, stats, recentAppointments }: Props) {
+    const { t } = useTrans();
+
+    const quickActions = [
+        { label: t('business.services'), route: 'businesses.services.index', icon: '🛎️' },
+        { label: t('staff.title'), route: 'businesses.staff.index', icon: '👥' },
+        { label: t('contacts.title'), route: 'businesses.contacts.index', icon: '📇' },
+        { label: t('vacancies.title'), route: 'businesses.vacancies.index', icon: '📅' },
+        { label: t('agenda.title'), route: 'businesses.agenda.index', icon: '📋' },
+        { label: t('calendar.title'), route: 'businesses.agenda.calendar', icon: '🗓️' },
+    ];
+
     const appointmentAction = (appointment: Appointment, action: string) => {
         router.post(route('businesses.appointments.action', [business.slug, appointment.id]), { action });
     };
@@ -73,7 +76,7 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                         href={route('businesses.edit', business.slug)}
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
                     >
-                        Edit Business
+                        {t('business.edit_business')}
                     </Link>
                 </div>
             }
@@ -84,27 +87,27 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                 <div className="mx-auto max-w-7xl space-y-8 sm:px-6 lg:px-8">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                            <p className="text-sm text-gray-500">Total Appointments</p>
+                            <p className="text-sm text-gray-500">{t('business.total_appointments')}</p>
                             <p className="mt-1 text-2xl font-semibold text-gray-900">
                                 {stats.total_appointments}
                             </p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                            <p className="text-sm text-gray-500">Upcoming</p>
+                            <p className="text-sm text-gray-500">{t('business.upcoming')}</p>
                             <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.upcoming}</p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                            <p className="text-sm text-gray-500">Contacts</p>
+                            <p className="text-sm text-gray-500">{t('business.contacts')}</p>
                             <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.contacts}</p>
                         </div>
                         <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                            <p className="text-sm text-gray-500">Services</p>
+                            <p className="text-sm text-gray-500">{t('business.services')}</p>
                             <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.services}</p>
                         </div>
                     </div>
 
                     <section>
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Quick Actions</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('business.quick_actions')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {quickActions.map((action) => (
                                 <Link
@@ -121,12 +124,12 @@ export default function Show({ business, stats, recentAppointments }: Props) {
 
                     <section>
                         <h3 className="mb-4 text-base font-semibold text-gray-900">
-                            Recent Appointments
+                            {t('business.recent_appointments')}
                         </h3>
 
                         {recentAppointments.length === 0 ? (
                             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-                                No appointments yet.
+                                {t('business.no_appointments')}
                             </div>
                         ) : (
                             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -134,19 +137,19 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                     <thead className="bg-gray-50">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                Date / Time
+                                                {t('common.date_time')}
                                             </th>
                                             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                Customer
+                                                {t('common.customer')}
                                             </th>
                                             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                Service
+                                                {t('common.service')}
                                             </th>
                                             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                Status
+                                                {t('common.status')}
                                             </th>
                                             <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                                                Actions
+                                                {t('common.actions')}
                                             </th>
                                         </tr>
                                     </thead>
@@ -177,7 +180,7 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                             }
                                                             className="mr-2 text-green-600 hover:text-green-800"
                                                         >
-                                                            Confirm
+                                                            {t('common.confirm')}
                                                         </button>
                                                     )}
                                                     {(appointment.status === 'reserved' ||
@@ -188,7 +191,7 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                             }
                                                             className="mr-2 text-red-600 hover:text-red-800"
                                                         >
-                                                            Cancel
+                                                            {t('common.cancel')}
                                                         </button>
                                                     )}
                                                     {appointment.status === 'confirmed' && (
@@ -198,7 +201,7 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                             }
                                                             className="text-blue-600 hover:text-blue-800"
                                                         >
-                                                            Serve
+                                                            {t('common.serve')}
                                                         </button>
                                                     )}
                                                 </td>

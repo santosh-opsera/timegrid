@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, Staff } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function Index({ business, staff }: Props) {
+    const { t } = useTrans();
     const [editingId, setEditingId] = useState<number | null>(null);
 
     const createForm = useForm({ name: '' });
@@ -51,18 +53,18 @@ export default function Index({ business, staff }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Staff — {business.name}
+                        {`${t('staff.title')} — ${business.name}`}
                     </h2>
                     <Link
                         href={route('businesses.show', business.slug)}
                         className="text-sm text-gray-600 hover:text-gray-800"
                     >
-                        ← Back to Dashboard
+                        {`← ${t('common.back_dashboard')}`}
                     </Link>
                 </div>
             }
         >
-            <Head title={`Staff — ${business.name}`} />
+            <Head title={`${t('staff.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-2xl space-y-8 sm:px-6 lg:px-8">
@@ -70,10 +72,10 @@ export default function Index({ business, staff }: Props) {
                         onSubmit={submitCreate}
                         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                     >
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Add Staff Member</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('staff.add_member')}</h3>
                         <div className="flex gap-3">
                             <div className="flex-1">
-                                <InputLabel htmlFor="name" value="Name" />
+                                <InputLabel htmlFor="name" value={t('form.name')} />
                                 <TextInput
                                     id="name"
                                     className="mt-1 block w-full"
@@ -84,7 +86,7 @@ export default function Index({ business, staff }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.name} />
                             </div>
                             <div className="flex items-end">
-                                <PrimaryButton disabled={createForm.processing}>Add</PrimaryButton>
+                                <PrimaryButton disabled={createForm.processing}>{t('common.add')}</PrimaryButton>
                             </div>
                         </div>
                     </form>
@@ -92,7 +94,7 @@ export default function Index({ business, staff }: Props) {
                     <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                         {staff.length === 0 ? (
                             <div className="p-6 text-center text-sm text-gray-500">
-                                No staff members yet.
+                                {t('staff.no_staff')}
                             </div>
                         ) : (
                             <ul className="divide-y divide-gray-200">
@@ -106,12 +108,12 @@ export default function Index({ business, staff }: Props) {
                                                     onChange={(e) => editForm.setData('name', e.target.value)}
                                                     required
                                                 />
-                                                <PrimaryButton type="submit">Save</PrimaryButton>
+                                                <PrimaryButton type="submit">{t('common.save')}</PrimaryButton>
                                                 <SecondaryButton
                                                     type="button"
                                                     onClick={() => setEditingId(null)}
                                                 >
-                                                    Cancel
+                                                    {t('common.cancel')}
                                                 </SecondaryButton>
                                             </form>
                                         ) : (
@@ -124,13 +126,13 @@ export default function Index({ business, staff }: Props) {
                                                         onClick={() => startEdit(member)}
                                                         className="text-sm text-indigo-600 hover:text-indigo-800"
                                                     >
-                                                        Edit
+                                                        {t('common.edit')}
                                                     </button>
                                                     <button
                                                         onClick={() => deleteStaff(member)}
                                                         className="text-sm text-red-600 hover:text-red-800"
                                                     >
-                                                        Delete
+                                                        {t('common.delete')}
                                                     </button>
                                                 </div>
                                             </>

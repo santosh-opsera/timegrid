@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function Edit({ business }: Props) {
+    const { t } = useTrans();
     const { data, setData, put, errors, processing } = useForm({
         name: business.name,
         description: business.description ?? '',
@@ -45,17 +47,17 @@ export default function Edit({ business }: Props) {
         <AuthenticatedLayout
             header={
                 <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Edit {business.name}
+                    {`${t('common.edit')} ${business.name}`}
                 </h2>
             }
         >
-            <Head title={`Edit ${business.name}`} />
+            <Head title={`${t('common.edit')} ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-2xl sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6 rounded-lg bg-white p-6 shadow-sm">
                         <div>
-                            <InputLabel htmlFor="name" value="Name" />
+                            <InputLabel htmlFor="name" value={t('form.name')} />
                             <TextInput
                                 id="name"
                                 className="mt-1 block w-full"
@@ -67,7 +69,7 @@ export default function Edit({ business }: Props) {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="description" value="Description" />
+                            <InputLabel htmlFor="description" value={t('form.description')} />
                             <textarea
                                 id="description"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -79,7 +81,7 @@ export default function Edit({ business }: Props) {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="category" value="Category" />
+                            <InputLabel htmlFor="category" value={t('form.category')} />
                             <TextInput
                                 id="category"
                                 className="mt-1 block w-full"
@@ -90,7 +92,7 @@ export default function Edit({ business }: Props) {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="timezone" value="Timezone" />
+                            <InputLabel htmlFor="timezone" value={t('form.timezone')} />
                             <select
                                 id="timezone"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -107,7 +109,7 @@ export default function Edit({ business }: Props) {
                         </div>
 
                         <div>
-                            <InputLabel value="Booking Strategy" />
+                            <InputLabel value={t('form.booking_strategy')} />
                             <div className="mt-2 flex gap-6">
                                 <label className="flex items-center gap-2">
                                     <input
@@ -118,7 +120,7 @@ export default function Edit({ business }: Props) {
                                         onChange={(e) => setData('strategy', e.target.value)}
                                         className="text-indigo-600 focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Timeslot</span>
+                                    <span className="text-sm text-gray-700">{t('form.timeslot')}</span>
                                 </label>
                                 <label className="flex items-center gap-2">
                                     <input
@@ -129,14 +131,14 @@ export default function Edit({ business }: Props) {
                                         onChange={(e) => setData('strategy', e.target.value)}
                                         className="text-indigo-600 focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Dateslot</span>
+                                    <span className="text-sm text-gray-700">{t('form.dateslot')}</span>
                                 </label>
                             </div>
                             <InputError className="mt-2" message={errors.strategy} />
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="phone" value="Phone" />
+                            <InputLabel htmlFor="phone" value={t('form.phone')} />
                             <TextInput
                                 id="phone"
                                 className="mt-1 block w-full"
@@ -147,7 +149,7 @@ export default function Edit({ business }: Props) {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="postal_address" value="Postal Address" />
+                            <InputLabel htmlFor="postal_address" value={t('form.postal_address')} />
                             <textarea
                                 id="postal_address"
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -158,7 +160,7 @@ export default function Edit({ business }: Props) {
                             <InputError className="mt-2" message={errors.postal_address} />
                         </div>
 
-                        <PrimaryButton disabled={processing}>Save Changes</PrimaryButton>
+                        <PrimaryButton disabled={processing}>{t('business.save_changes')}</PrimaryButton>
                     </form>
                 </div>
             </div>

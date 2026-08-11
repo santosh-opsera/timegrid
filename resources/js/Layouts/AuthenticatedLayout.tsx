@@ -1,7 +1,9 @@
 import Flash from '@/Components/Flash';
 import Dropdown from '@/Components/Dropdown';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { useTrans } from '@/hooks/useTrans';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -10,6 +12,7 @@ export default function Authenticated({
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const { user, can } = usePage<import('@/types').PageProps>().props.auth;
+    const { t } = useTrans();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -31,20 +34,21 @@ export default function Authenticated({
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
                                 >
-                                    Dashboard
+                                    {t('nav.dashboard')}
                                 </NavLink>
                                 {can.manage_businesses && (
                                     <NavLink
                                         href={route('businesses.index')}
                                         active={route().current('businesses.*')}
                                     >
-                                        Businesses
+                                        {t('nav.businesses')}
                                     </NavLink>
                                 )}
                             </div>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                            <LanguageSwitcher />
                             <div className="relative ms-3">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -75,14 +79,14 @@ export default function Authenticated({
                                         <Dropdown.Link
                                             href={route('profile.edit')}
                                         >
-                                            Profile
+                                            {t('nav.profile')}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            {t('nav.log_out')}
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
@@ -143,14 +147,14 @@ export default function Authenticated({
                             href={route('dashboard')}
                             active={route().current('dashboard')}
                         >
-                            Dashboard
+                            {t('nav.dashboard')}
                         </ResponsiveNavLink>
                         {can.manage_businesses && (
                             <ResponsiveNavLink
                                 href={route('businesses.index')}
                                 active={route().current('businesses.*')}
                             >
-                                Businesses
+                                {t('nav.businesses')}
                             </ResponsiveNavLink>
                         )}
                     </div>
@@ -166,15 +170,16 @@ export default function Authenticated({
                         </div>
 
                         <div className="mt-3 space-y-1">
+                            <LanguageSwitcher className="px-4 py-2" />
                             <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
+                                {t('nav.profile')}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route('logout')}
                                 as="button"
                             >
-                                Log Out
+                                {t('nav.log_out')}
                             </ResponsiveNavLink>
                         </div>
                     </div>

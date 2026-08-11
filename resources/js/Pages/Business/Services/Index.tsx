@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, Service } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function Index({ business, services }: Props) {
+    const { t } = useTrans();
     const [editingId, setEditingId] = useState<number | null>(null);
 
     const createForm = useForm({
@@ -81,18 +83,18 @@ export default function Index({ business, services }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Services — {business.name}
+                        {`${t('services.title')} — ${business.name}`}
                     </h2>
                     <Link
                         href={route('businesses.show', business.slug)}
                         className="text-sm text-gray-600 hover:text-gray-800"
                     >
-                        ← Back to Dashboard
+                        {`← ${t('common.back_dashboard')}`}
                     </Link>
                 </div>
             }
         >
-            <Head title={`Services — ${business.name}`} />
+            <Head title={`${t('services.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-4xl space-y-8 sm:px-6 lg:px-8">
@@ -100,10 +102,10 @@ export default function Index({ business, services }: Props) {
                         onSubmit={submitCreate}
                         className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
                     >
-                        <h3 className="mb-4 text-base font-semibold text-gray-900">Add Service</h3>
+                        <h3 className="mb-4 text-base font-semibold text-gray-900">{t('services.add_service')}</h3>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="name" value="Name" />
+                                <InputLabel htmlFor="name" value={t('form.name')} />
                                 <TextInput
                                     id="name"
                                     className="mt-1 block w-full"
@@ -114,7 +116,7 @@ export default function Index({ business, services }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.name} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="duration" value="Duration (minutes)" />
+                                <InputLabel htmlFor="duration" value={t('form.duration_minutes')} />
                                 <TextInput
                                     id="duration"
                                     type="number"
@@ -130,7 +132,7 @@ export default function Index({ business, services }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.duration} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="color" value="Color" />
+                                <InputLabel htmlFor="color" value={t('form.color')} />
                                 <input
                                     id="color"
                                     type="color"
@@ -141,7 +143,7 @@ export default function Index({ business, services }: Props) {
                                 <InputError className="mt-2" message={createForm.errors.color} />
                             </div>
                             <div>
-                                <InputLabel htmlFor="description" value="Description" />
+                                <InputLabel htmlFor="description" value={t('form.description')} />
                                 <TextInput
                                     id="description"
                                     className="mt-1 block w-full"
@@ -152,14 +154,14 @@ export default function Index({ business, services }: Props) {
                             </div>
                         </div>
                         <div className="mt-4">
-                            <PrimaryButton disabled={createForm.processing}>Add Service</PrimaryButton>
+                            <PrimaryButton disabled={createForm.processing}>{t('services.add_service')}</PrimaryButton>
                         </div>
                     </form>
 
                     <div className="space-y-4">
                         {services.length === 0 ? (
                             <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-                                No services yet. Add one above.
+                                {t('services.no_services')}
                             </div>
                         ) : (
                             services.map((service) => (
@@ -171,7 +173,7 @@ export default function Index({ business, services }: Props) {
                                         <form onSubmit={submitEdit} className="space-y-4">
                                             <div className="grid gap-4 sm:grid-cols-2">
                                                 <div>
-                                                    <InputLabel value="Name" />
+                                                    <InputLabel value={t('form.name')} />
                                                     <TextInput
                                                         className="mt-1 block w-full"
                                                         value={editForm.data.name}
@@ -182,7 +184,7 @@ export default function Index({ business, services }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <InputLabel value="Duration (minutes)" />
+                                                    <InputLabel value={t('form.duration_minutes')} />
                                                     <TextInput
                                                         type="number"
                                                         min={5}
@@ -199,7 +201,7 @@ export default function Index({ business, services }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <InputLabel value="Color" />
+                                                    <InputLabel value={t('form.color')} />
                                                     <input
                                                         type="color"
                                                         className="mt-1 h-10 w-full cursor-pointer rounded-md border border-gray-300"
@@ -210,7 +212,7 @@ export default function Index({ business, services }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <InputLabel value="Description" />
+                                                    <InputLabel value={t('form.description')} />
                                                     <TextInput
                                                         className="mt-1 block w-full"
                                                         value={editForm.data.description}
@@ -221,12 +223,12 @@ export default function Index({ business, services }: Props) {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <PrimaryButton type="submit">Save</PrimaryButton>
+                                                <PrimaryButton type="submit">{t('common.save')}</PrimaryButton>
                                                 <SecondaryButton
                                                     type="button"
                                                     onClick={() => setEditingId(null)}
                                                 >
-                                                    Cancel
+                                                    {t('common.cancel')}
                                                 </SecondaryButton>
                                             </div>
                                         </form>
@@ -242,7 +244,7 @@ export default function Index({ business, services }: Props) {
                                                         {service.name}
                                                     </h4>
                                                     <p className="text-sm text-gray-500">
-                                                        {service.duration} minutes
+                                                        {service.duration} {t('common.minutes')}
                                                     </p>
                                                     {service.description && (
                                                         <p className="mt-1 text-sm text-gray-600">
@@ -259,19 +261,19 @@ export default function Index({ business, services }: Props) {
                                                         onChange={() => toggleActive(service)}
                                                         className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
-                                                    Active
+                                                    {t('common.active')}
                                                 </label>
                                                 <button
                                                     onClick={() => startEdit(service)}
                                                     className="text-sm text-indigo-600 hover:text-indigo-800"
                                                 >
-                                                    Edit
+                                                    {t('common.edit')}
                                                 </button>
                                                 <button
                                                     onClick={() => deleteService(service)}
                                                     className="text-sm text-red-600 hover:text-red-800"
                                                 >
-                                                    Delete
+                                                    {t('common.delete')}
                                                 </button>
                                             </div>
                                         </div>

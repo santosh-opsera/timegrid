@@ -1,6 +1,7 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import { useTrans } from '@/hooks/useTrans';
 import { Business, PageProps, Service } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
@@ -9,7 +10,7 @@ interface ShowProps {
     business: Business;
 }
 
-const STEPS = ['Service', 'Date', 'Time', 'Details'] as const;
+const STEPS = ['service', 'date', 'time', 'details'] as const;
 type Step = 1 | 2 | 3 | 4;
 
 function formatDate(dateStr: string): string {
@@ -43,6 +44,7 @@ function splitName(name: string): { firstname: string; lastname: string } {
 }
 
 export default function Show({ business }: ShowProps) {
+    const { t } = useTrans();
     const { auth } = usePage<PageProps>().props;
     const user = auth?.user ?? null;
     const { firstname: defaultFirstname, lastname: defaultLastname } = user?.name
@@ -50,6 +52,13 @@ export default function Show({ business }: ShowProps) {
         : { firstname: '', lastname: '' };
 
     const services = (business.services ?? []).filter((s) => s.is_active);
+
+    const stepLabels: Record<string, string> = {
+        service: t('booking.step_service'),
+        date: t('booking.step_date'),
+        time: t('booking.step_time'),
+        details: t('booking.step_details'),
+    };
 
     const [step, setStep] = useState<Step>(1);
     const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -93,7 +102,7 @@ export default function Show({ business }: ShowProps) {
                 setDates(body.dates);
             })
             .catch(() => {
-                setFetchError('Unable to load available dates. Please try again.');
+                setFetchError(t('booking.error_dates'));
             })
             .finally(() => {
                 setLoadingDates(false);
@@ -122,7 +131,7 @@ export default function Show({ business }: ShowProps) {
                 setTimes(body.times);
             })
             .catch(() => {
-                setFetchError('Unable to load available times. Please try again.');
+                setFetchError(t('booking.error_times'));
             })
             .finally(() => {
                 setLoadingTimes(false);
@@ -183,14 +192,14 @@ export default function Show({ business }: ShowProps) {
                                 href={route('dashboard')}
                                 className="text-sm text-gray-600 hover:text-gray-800"
                             >
-                                Dashboard
+                                {t('nav.dashboard')}
                             </Link>
                         ) : (
                             <Link
                                 href={route('login')}
                                 className="text-sm text-indigo-600 hover:text-indigo-700"
                             >
-                                Log in
+                                {t('nav.log_in')}
                             </Link>
                         )}
                     </div>
@@ -246,7 +255,7 @@ export default function Show({ business }: ShowProps) {
                                                 isActive || isComplete ? 'text-indigo-600' : 'text-gray-400'
                                             }`}
                                         >
-                                            {label}
+                                            {stepLabels[label]}
                                         </span>
                                     </li>
                                 );
@@ -261,19 +270,19 @@ export default function Show({ business }: ShowProps) {
                                 onClick={goBack}
                                 className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700"
                             >
-                                ← Back
+                                ← {t('booking.back')}
                             </button>
                         )}
 
                         {/* Step 1: Service */}
                         {step === 1 && (
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Choose a service</h2>
-                                <p className="mt-1 text-sm text-gray-500">Select the service you'd like to book.</p>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('booking.choose_service')}</h2>
+                                <p className="mt-1 text-sm text-gray-500">{t('booking.choose_service_desc')}</p>
 
                                 {services.length === 0 ? (
                                     <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-                                        No services available at the moment.
+                                        {t('booking.no_services')}
                                     </div>
                                 ) : (
                                     <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -294,7 +303,7 @@ export default function Show({ business }: ShowProps) {
                                                     </p>
                                                 )}
                                                 <p className="mt-3 text-xs font-medium text-indigo-600">
-                                                    {service.duration} min
+                                                    {service.duration} {t('booking.min')}
                                                 </p>
                                             </button>
                                         ))}
@@ -306,15 +315,16 @@ export default function Show({ business }: ShowProps) {
                         {/* Step 2: Date */}
                         {step === 2 && selectedService && (
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Choose a date</h2>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('booking.choose_date')}</h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Booking <span className="font-medium text-gray-700">{selectedService.name}</span>
+                                    {t('booking.booking_label')}{' '}
+                                    <span className="font-medium text-gray-700">{selectedService.name}</span>
                                 </p>
 
                                 {loadingDates && (
                                     <div className="mt-8 flex items-center justify-center gap-3 text-sm text-gray-500">
                                         <span className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-                                        Loading available dates…
+                                        {t('booking.loading_dates')}
                                     </div>
                                 )}
 
@@ -326,7 +336,7 @@ export default function Show({ business }: ShowProps) {
 
                                 {!loadingDates && !fetchError && dates.length === 0 && (
                                     <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-                                        No available dates right now. Please check back later.
+                                        {t('booking.no_dates')}
                                     </div>
                                 )}
 
@@ -354,7 +364,7 @@ export default function Show({ business }: ShowProps) {
                         {/* Step 3: Time */}
                         {step === 3 && selectedService && selectedDate && (
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Choose a time</h2>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('booking.choose_time')}</h2>
                                 <p className="mt-1 text-sm text-gray-500">
                                     {selectedService.name} on{' '}
                                     <span className="font-medium text-gray-700">{formatDate(selectedDate)}</span>
@@ -363,7 +373,7 @@ export default function Show({ business }: ShowProps) {
                                 {loadingTimes && (
                                     <div className="mt-8 flex items-center justify-center gap-3 text-sm text-gray-500">
                                         <span className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-                                        Loading available times…
+                                        {t('booking.loading_times')}
                                     </div>
                                 )}
 
@@ -375,7 +385,7 @@ export default function Show({ business }: ShowProps) {
 
                                 {!loadingTimes && !fetchError && times.length === 0 && (
                                     <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-                                        No available times for this date. Try another date.
+                                        {t('booking.no_times')}
                                     </div>
                                 )}
 
@@ -403,16 +413,16 @@ export default function Show({ business }: ShowProps) {
                         {/* Step 4: Details */}
                         {step === 4 && selectedService && selectedDate && selectedTime && (
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Your details</h2>
+                                <h2 className="text-lg font-semibold text-gray-900">{t('booking.your_details')}</h2>
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Almost done! Confirm your booking details below.
+                                    {t('booking.almost_done')}
                                 </p>
 
                                 <div className="mt-4 rounded-lg bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
                                     <p className="font-medium">{selectedService.name}</p>
                                     <p className="mt-0.5 text-indigo-700">
                                         {formatDate(selectedDate)} at {formatTime(selectedTime)} ·{' '}
-                                        {selectedService.duration} min
+                                        {selectedService.duration} {t('booking.min')}
                                     </p>
                                 </div>
 
@@ -425,7 +435,7 @@ export default function Show({ business }: ShowProps) {
                                 <form onSubmit={submit} className="mt-6 space-y-4">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div>
-                                            <InputLabel htmlFor="firstname" value="First name" />
+                                            <InputLabel htmlFor="firstname" value={t('form.first_name')} />
                                             <TextInput
                                                 id="firstname"
                                                 value={data.firstname}
@@ -436,7 +446,7 @@ export default function Show({ business }: ShowProps) {
                                             <InputError message={errors.firstname} className="mt-2" />
                                         </div>
                                         <div>
-                                            <InputLabel htmlFor="lastname" value="Last name" />
+                                            <InputLabel htmlFor="lastname" value={t('form.last_name')} />
                                             <TextInput
                                                 id="lastname"
                                                 value={data.lastname}
@@ -448,7 +458,7 @@ export default function Show({ business }: ShowProps) {
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="email" value="Email" />
+                                        <InputLabel htmlFor="email" value={t('form.email')} />
                                         <TextInput
                                             id="email"
                                             type="email"
@@ -461,7 +471,7 @@ export default function Show({ business }: ShowProps) {
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="phone" value="Phone (optional)" />
+                                        <InputLabel htmlFor="phone" value={t('form.phone_optional')} />
                                         <TextInput
                                             id="phone"
                                             type="tel"
@@ -473,7 +483,7 @@ export default function Show({ business }: ShowProps) {
                                     </div>
 
                                     <div>
-                                        <InputLabel htmlFor="comments" value="Comments (optional)" />
+                                        <InputLabel htmlFor="comments" value={t('form.comments_optional')} />
                                         <textarea
                                             id="comments"
                                             value={data.comments}
@@ -489,7 +499,7 @@ export default function Show({ business }: ShowProps) {
                                         disabled={processing}
                                         className="mt-2 w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
                                     >
-                                        {processing ? 'Confirming…' : 'Confirm Booking'}
+                                        {processing ? t('booking.confirming') : t('booking.confirm_booking')}
                                     </button>
                                 </form>
                             </div>

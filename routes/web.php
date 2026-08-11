@@ -5,12 +5,15 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\VacancyController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
 
 Route::get('/', [PublicController::class, 'welcome'])->name('home');
 Route::get('/directory', [PublicController::class, 'directory'])->name('directory');

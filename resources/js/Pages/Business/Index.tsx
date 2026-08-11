@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 
@@ -7,34 +8,36 @@ interface Props {
 }
 
 export default function Index({ businesses }: Props) {
+    const { t } = useTrans();
+
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        My Businesses
+                        {t('business.my_businesses')}
                     </h2>
                     <Link
                         href={route('businesses.create')}
                         className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                     >
-                        Create Business
+                        {t('business.create')}
                     </Link>
                 </div>
             }
         >
-            <Head title="My Businesses" />
+            <Head title={t('business.my_businesses')} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {businesses.length === 0 ? (
                         <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
-                            <p className="text-gray-500">You don&apos;t have any businesses yet.</p>
+                            <p className="text-gray-500">{t('business.no_businesses')}</p>
                             <Link
                                 href={route('businesses.create')}
                                 className="mt-4 inline-flex rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
                             >
-                                Create Business
+                                {t('business.create')}
                             </Link>
                         </div>
                     ) : (
@@ -52,9 +55,9 @@ export default function Index({ businesses }: Props) {
                                         </p>
                                     )}
                                     <div className="mt-4 flex gap-4 text-sm text-gray-600">
-                                        <span>{business.services_count ?? 0} services</span>
-                                        <span>{business.contacts_count ?? 0} contacts</span>
-                                        <span>{business.appointments_count ?? 0} appointments</span>
+                                        <span>{business.services_count ?? 0} {t('dashboard.services')}</span>
+                                        <span>{business.contacts_count ?? 0} {t('dashboard.contacts')}</span>
+                                        <span>{business.appointments_count ?? 0} {t('business.appointments')}</span>
                                     </div>
                                 </Link>
                             ))}

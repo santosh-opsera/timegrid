@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Business } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -48,6 +49,7 @@ function getMonthDays(year: number, month: number) {
 }
 
 export default function Calendar({ business, events }: Props) {
+    const { t } = useTrans();
     const today = new Date();
     const [currentMonth, setCurrentMonth] = useState(
         new Date(today.getFullYear(), today.getMonth(), 1),
@@ -88,26 +90,26 @@ export default function Calendar({ business, events }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Calendar — {business.name}
+                        {`${t('calendar.title')} — ${business.name}`}
                     </h2>
                     <div className="flex items-center gap-4">
                         <Link
                             href={route('businesses.agenda.index', business.slug)}
                             className="text-sm text-indigo-600 hover:text-indigo-800"
                         >
-                            Agenda View
+                            {t('agenda.agenda_view')}
                         </Link>
                         <Link
                             href={route('businesses.show', business.slug)}
                             className="text-sm text-gray-600 hover:text-gray-800"
                         >
-                            ← Back to Dashboard
+                            {`← ${t('common.back_dashboard')}`}
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Calendar — ${business.name}`} />
+            <Head title={`${t('calendar.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -117,14 +119,14 @@ export default function Calendar({ business, events }: Props) {
                                 onClick={goToPrevMonth}
                                 className="rounded-md px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
                             >
-                                ← Prev
+                                {`← ${t('common.prev')}`}
                             </button>
                             <h3 className="text-lg font-semibold text-gray-900">{monthLabel}</h3>
                             <button
                                 onClick={goToNextMonth}
                                 className="rounded-md px-3 py-1 text-sm text-gray-600 hover:bg-gray-100"
                             >
-                                Next →
+                                {`${t('common.next')} →`}
                             </button>
                         </div>
 
@@ -184,7 +186,7 @@ export default function Calendar({ business, events }: Props) {
                                             ))}
                                             {dayEvents.length > 3 && (
                                                 <div className="px-1 text-xs text-gray-500">
-                                                    +{dayEvents.length - 3} more
+                                                    {t('common.more', { count: dayEvents.length - 3 })}
                                                 </div>
                                             )}
                                         </div>

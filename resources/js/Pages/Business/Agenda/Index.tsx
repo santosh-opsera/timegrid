@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { useTrans } from '@/hooks/useTrans';
 import { Appointment, Business } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -36,6 +37,8 @@ function contactName(appointment: Appointment): string {
 }
 
 export default function Index({ business, appointments, date }: Props) {
+    const { t } = useTrans();
+
     const changeDate = (newDate: string) => {
         router.get(route('businesses.agenda.index', business.slug), { date: newDate });
     };
@@ -51,32 +54,32 @@ export default function Index({ business, appointments, date }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Agenda — {business.name}
+                        {`${t('agenda.title')} — ${business.name}`}
                     </h2>
                     <div className="flex items-center gap-4">
                         <Link
                             href={route('businesses.agenda.calendar', business.slug)}
                             className="text-sm text-indigo-600 hover:text-indigo-800"
                         >
-                            Calendar View
+                            {t('agenda.calendar_view')}
                         </Link>
                         <Link
                             href={route('businesses.show', business.slug)}
                             className="text-sm text-gray-600 hover:text-gray-800"
                         >
-                            ← Back to Dashboard
+                            {`← ${t('common.back_dashboard')}`}
                         </Link>
                     </div>
                 </div>
             }
         >
-            <Head title={`Agenda — ${business.name}`} />
+            <Head title={`${t('agenda.title')} — ${business.name}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
                     <div className="mb-6">
                         <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-                            Date
+                            {t('form.date')}
                         </label>
                         <input
                             id="date"
@@ -89,7 +92,7 @@ export default function Index({ business, appointments, date }: Props) {
 
                     {appointments.length === 0 ? (
                         <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-                            No appointments for this date.
+                            {t('agenda.no_appointments')}
                         </div>
                     ) : (
                         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -97,19 +100,19 @@ export default function Index({ business, appointments, date }: Props) {
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                            Time
+                                            {t('common.time')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                            Customer
+                                            {t('common.customer')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                            Service
+                                            {t('common.service')}
                                         </th>
                                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                                            Status
+                                            {t('common.status')}
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                                            Actions
+                                            {t('common.actions')}
                                         </th>
                                     </tr>
                                 </thead>
@@ -140,7 +143,7 @@ export default function Index({ business, appointments, date }: Props) {
                                                         }
                                                         className="mr-2 rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
                                                     >
-                                                        Confirm
+                                                        {t('common.confirm')}
                                                     </button>
                                                 )}
                                                 {(appointment.status === 'reserved' ||
@@ -151,7 +154,7 @@ export default function Index({ business, appointments, date }: Props) {
                                                         }
                                                         className="mr-2 rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
                                                     >
-                                                        Cancel
+                                                        {t('common.cancel')}
                                                     </button>
                                                 )}
                                                 {appointment.status === 'confirmed' && (
@@ -161,7 +164,7 @@ export default function Index({ business, appointments, date }: Props) {
                                                         }
                                                         className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
                                                     >
-                                                        Serve
+                                                        {t('common.serve')}
                                                     </button>
                                                 )}
                                             </td>
