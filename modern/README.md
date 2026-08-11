@@ -1,58 +1,170 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TimeGrid
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Online appointment booking platform. Businesses publish their available time slots, customers browse and book appointments.
 
-## About Laravel
+Built with **Laravel 11**, **Inertia.js**, **React 19**, **TypeScript**, and **Tailwind CSS**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Screenshots
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Landing Page
+Public homepage with featured businesses and a call-to-action to browse or register.
 
-## Learning Laravel
+![Landing Page](docs/screenshots/01-landing.png)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Business Directory
+Browse all registered businesses and book directly.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+![Directory](docs/screenshots/08-directory.png)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Booking Wizard
+Four-step booking flow: choose a service, pick a date, select a time, confirm details.
 
-## Agentic Development
+![Booking Wizard](docs/screenshots/02-booking-wizard.png)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Owner Dashboard
+Business owners see their businesses with stats and all upcoming appointments across their businesses.
 
-```bash
-composer require laravel/boost --dev
+![Owner Dashboard](docs/screenshots/05-dashboard-owner.png)
 
-php artisan boost:install
+### Customer Dashboard
+Customers see only their own booked appointments with a link to browse businesses.
+
+![Customer Dashboard](docs/screenshots/03-dashboard-customer.png)
+
+### Business Management
+Owner management hub with stats, quick actions (services, staff, contacts, vacancies, agenda, calendar), and recent appointments with action buttons.
+
+![Business Management](docs/screenshots/06-business-management.png)
+
+### Agenda View
+Daily appointment view with status badges and action buttons (Confirm, Cancel, Serve) that follow the appointment state machine.
+
+![Agenda](docs/screenshots/07-agenda.png)
+
+### Authentication
+Login page with email/password. Registration available for new users.
+
+![Login](docs/screenshots/04-login.png)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 11 (PHP 8.2+) |
+| Frontend | React 19 + TypeScript |
+| Routing | Inertia.js (SPA feel, no separate API) |
+| Styling | Tailwind CSS |
+| Build | Vite |
+| Database | MySQL 8 (SQLite for dev) |
+| Auth | Laravel Breeze |
+
+## Architecture
+
+```
+modern/
+├── app/
+│   ├── Enums/              # UserRole, AppointmentStatus, BookingStrategy
+│   ├── Http/Controllers/   # Inertia controllers + API v1
+│   ├── Models/             # Eloquent models (Business, Service, Staff, etc.)
+│   ├── Policies/           # Role-based authorization
+│   └── Services/           # AvailabilityService, BookingService, SlotGenerator
+├── resources/js/
+│   ├── Components/         # Reusable UI components
+│   ├── Layouts/            # AuthenticatedLayout, GuestLayout
+│   ├── Pages/              # Inertia pages (Dashboard, Booking, Business/*)
+│   └── types/              # TypeScript interfaces
+├── database/
+│   ├── migrations/         # Schema definitions
+│   └── seeders/            # DemoSeeder with sample data
+└── routes/
+    ├── web.php             # Inertia routes
+    └── api.php             # JSON API for availability
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## User Roles
 
-## Contributing
+| Role | Can Do |
+|------|--------|
+| **Root** | Everything (super admin) |
+| **Owner** | Create/manage businesses, services, staff, vacancies, view agenda |
+| **Customer** | Browse businesses, book appointments, view own appointments |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Appointment State Machine
 
-## Code of Conduct
+```
+reserved ──→ confirmed ──→ served
+    │              │
+    └──→ canceled ←┘
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- `reserved` → `confirmed` or `canceled`
+- `confirmed` → `served` or `canceled`
+- `canceled` and `served` are terminal states
 
-## Security Vulnerabilities
+## Getting Started
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Prerequisites
+
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- MySQL 8 (or SQLite for local dev)
+
+### Installation
+
+```bash
+cd modern
+
+# Install dependencies
+composer install
+npm install
+
+# Environment setup
+cp .env.example .env
+php artisan key:generate
+
+# Database
+php artisan migrate
+php artisan db:seed --class=DemoSeeder
+
+# Build frontend
+npm run build
+
+# Start server
+php artisan serve
+```
+
+Open [http://localhost:8000](http://localhost:8000).
+
+### Demo Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Root | root@timegrid.io | password |
+| Owner | owner@timegrid.io | password |
+| Customer | customer@timegrid.io | password |
+
+### Development
+
+Run the Vite dev server for hot reload:
+
+```bash
+npm run dev
+```
+
+## Key Features
+
+- **Public booking page** — customers browse services, pick date/time, and book (login required to submit)
+- **Role-based dashboards** — owners manage businesses, customers view their appointments
+- **Vacancy-driven availability** — business owners define time windows, the system generates bookable slots
+- **Appointment lifecycle** — reserve, confirm, serve, or cancel with enforced state transitions
+- **Multi-step booking wizard** — guided 4-step flow with real-time availability checks
+- **Business management** — services, staff, contacts, vacancies, agenda, and calendar views
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+[MIT](https://opensource.org/licenses/MIT)
