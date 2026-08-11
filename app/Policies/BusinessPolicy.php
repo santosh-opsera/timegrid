@@ -2,125 +2,38 @@
 
 namespace App\Policies;
 
-use Timegridio\Concierge\Models\Business;
+use App\Models\Business;
 use App\Models\User;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
 class BusinessPolicy
 {
-    use HandlesAuthorization;
-
-    /**
-     * Create a new policy instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public function viewAny(User $user): bool
     {
-        //
+        return true;
     }
 
-    /**
-     * Determine if the given business can be updated by the user.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function update(User $user, Business $business)
+    public function view(User $user, Business $business): bool
     {
-        return $user->isOwnerOf($business);
+        return true;
     }
 
-    /**
-     * Determine if the given business can be destroyed by the user.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function destroy(User $user, Business $business)
+    public function create(User $user): bool
     {
-        return $user->isOwnerOf($business);
+        return $user->role !== \App\Enums\UserRole::Customer;
     }
 
-    /**
-     * Determine if the given business can be configured by the user.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function managePreferences(User $user, Business $business)
+    public function update(User $user, Business $business): bool
     {
-        return $user->isOwnerOf($business);
+        return $user->isOwner($business);
     }
 
-    /**
-     * Determine if the given user can manage the business.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function manage(User $user, Business $business)
+    public function delete(User $user, Business $business): bool
     {
-        return $user->isOwnerOf($business);
+        return $user->isOwner($business);
     }
 
-    /**
-     * Determine if the given user can manage a business' contact.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function manageContacts(User $user, Business $business)
+    public function manage(User $user, Business $business): bool
     {
-        return $user->isOwnerOf($business);
-    }
-
-    /**
-     * Determine if the given user can manage a business' human resources.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function manageHumanresources(User $user, Business $business)
-    {
-        return $user->isOwnerOf($business);
-    }
-
-    /**
-     * Determine if the given user can manage a business' service.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function manageServices(User $user, Business $business)
-    {
-        return $user->isOwnerOf($business);
-    }
-
-    /**
-     * Determine if the given user can manage a business' vacancies.
-     *
-     * @param User     $user
-     * @param Business $business
-     *
-     * @return bool
-     */
-    public function manageVacancies(User $user, Business $business)
-    {
-        return $user->isOwnerOf($business);
+        return $user->isOwner($business);
     }
 }

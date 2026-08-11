@@ -1,49 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         backupStaticAttributes="false"
-         bootstrap="bootstrap/autoload.php"
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         processIsolation="false"
-         stopOnFailure="true"
-         syntaxCheck="false">
-<!--
-    <logging>
-        <log type="coverage-clover" target="build/logs/clover.xml"/>
-        <log type="coverage-html" target="build/logs/codeCoverage" charset="UTF-8" yui="true" highlight="true" lowUpperBound="50" highLowerBound="80"/>
-        <log type="testdox-html" target="build/logs/testdox.html" />
-    </logging>
--->
+>
     <testsuites>
-        <testsuite name="Application Test Suite">
-            <directory suffix="Test.php">./tests/unit/</directory>
-            <directory suffix="Test.php">./tests/integration/</directory>
-            <directory suffix="Test.php">./tests/acceptance/compliance/</directory>
-            <directory suffix="Test.php">./tests/acceptance/scenarios/</directory>
-            <directory suffix="Test.php">./tests/acceptance/commands/</directory>
-            <directory suffix="Test.php">./tests/acceptance/emails/</directory>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="APP_LOG" value="syslog"/>
-        <env name="DB_CONNECTION" value="testing"/>
-        <env name="DB_DATABASE" value="testing_timegrid"/>
-        <env name="DB_USERNAME" value="testing_timegrid"/>
-        <env name="DB_PASSWORD" value="testing_timegrid"/>
-        <env name="CACHE_DRIVER" value="array"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="DB_URL" value=""/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
-        <env name="QUEUE_DRIVER" value="sync"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true" addUncoveredFilesFromWhitelist="true">
-            <directory suffix=".php">app/</directory>
-            <exclude>
-                <file>./app/Http/routes.php</file>
-                <directory suffix=".js">public/</directory>
-            </exclude>
-        </whitelist>
-    </filter>
 </phpunit>

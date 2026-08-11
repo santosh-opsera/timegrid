@@ -30,7 +30,6 @@ node -v
 ### Step 2: Install dependencies
 
 ```bash
-cd modern
 composer install --no-interaction
 npm install
 ```
@@ -38,7 +37,6 @@ npm install
 ### Step 3: Environment setup
 
 ```bash
-cd modern
 cp .env.example .env
 php artisan key:generate
 ```
@@ -46,7 +44,6 @@ php artisan key:generate
 ### Step 4: Database setup (SQLite — zero config)
 
 ```bash
-cd modern
 touch database/database.sqlite
 php artisan migrate --force
 ```
@@ -54,21 +51,18 @@ php artisan migrate --force
 ### Step 5: Seed demo data
 
 ```bash
-cd modern
 php artisan db:seed --class=DemoSeeder
 ```
 
 ### Step 6: Build frontend
 
 ```bash
-cd modern
 npm run build
 ```
 
 ### Step 7: Start the server
 
 ```bash
-cd modern
 php artisan serve
 ```
 
@@ -89,10 +83,21 @@ After the server starts, tell the user:
 When the user says `/dev`, start both the Laravel server and Vite dev server for hot-reload:
 
 ```bash
-cd modern
 php artisan serve &
 npm run dev
 ```
+
+---
+
+## /docker Command
+
+When the user says `/docker`, build and start the app using Docker Compose:
+
+```bash
+docker compose up --build -d
+```
+
+The app will be available at http://localhost:8080.
 
 ---
 
@@ -102,4 +107,4 @@ npm run dev
 - The `.env.example` is pre-configured for SQLite with sensible defaults
 - Frontend: React 19 + TypeScript + Tailwind CSS via Inertia.js
 - Backend: Laravel 11 with Breeze authentication
-- All app code lives in the `modern/` directory
+- Docker Compose available for containerized deployment
