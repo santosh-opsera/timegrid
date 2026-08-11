@@ -13,7 +13,6 @@ class TrustProxies
 
         if ($request->header('x-forwarded-proto') === 'https') {
             $request->server->set('HTTPS', 'on');
-            \URL::forceScheme('https');
         }
 
         return $next($request);
