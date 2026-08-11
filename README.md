@@ -175,7 +175,6 @@ The AI agent will install prerequisites, configure everything, and start the ser
 
 | Role | Email | Password |
 |------|-------|----------|
-| Root | root@timegrid.io | password |
 | Owner | owner@timegrid.io | password |
 | Customer | customer@timegrid.io | password |
 
@@ -221,13 +220,10 @@ For production, override these in `.env` or pass via `docker compose`:
 1. Fork this repo to your GitHub account
 2. Go to [render.com/deploy](https://render.com/deploy)
 3. Connect your GitHub repo and select the `only-claude` branch
-4. Render reads `render.yaml` and creates the web service + PostgreSQL database automatically
-5. After deploy, open a shell and seed demo data:
-   ```bash
-   php artisan db:seed --class=DemoSeeder
-   ```
+4. Render reads `render.yaml` and creates the web service automatically
+5. Demo data is seeded automatically on every startup
 
-The `render.yaml` blueprint configures everything: free web service, free PostgreSQL, environment variables, and health checks.
+The `render.yaml` blueprint configures everything: free web service, environment variables, and health checks. Demo accounts are pre-loaded (see table above).
 
 ### Other platforms
 
