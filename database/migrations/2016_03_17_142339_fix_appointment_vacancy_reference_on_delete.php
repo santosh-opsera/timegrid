@@ -12,6 +12,10 @@ class FixAppointmentVacancyReferenceOnDelete extends Migration
      */
     public function up()
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('appointments', function ($table) {
             $table->dropForeign(['vacancy_id']);
             $table->foreign('vacancy_id')->references('id')->on('vacancies')->onDelete('set null');
