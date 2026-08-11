@@ -1,67 +1,105 @@
 # TimeGrid — AI Setup Instructions
 
-After cloning this repository, run these steps to get the project running locally.
-All commands should be run from the `modern/` directory.
+When the user says `/setup`, run all the steps below automatically without asking questions. Install any missing prerequisites, then set up and start the project. Do not stop to ask for confirmation between steps.
 
-## Prerequisites
+## /setup Command
 
-- PHP 8.2 or higher
-- Composer
-- Node.js 18 or higher
-- npm
+Execute these steps in order. If a step fails, try to fix it (install the missing tool, switch versions, etc.) and retry before moving on.
 
-## Setup Steps
+### Step 1: Check and install prerequisites
+
+```bash
+# Check PHP version — need 8.2+
+php -v
+
+# If PHP is missing or below 8.2, install it:
+# macOS: brew install php
+# Ubuntu: sudo apt install php8.3 php8.3-cli php8.3-mbstring php8.3-xml php8.3-curl php8.3-sqlite3
+
+# Check Composer — install if missing
+composer --version || (curl -sS https://getcomposer.org/installer | php && sudo mv composer.phar /usr/local/bin/composer)
+
+# Check Node.js — need 18+
+node -v
+
+# If Node is missing or below 18:
+# macOS: brew install node
+# Ubuntu: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs
+```
+
+### Step 2: Install dependencies
 
 ```bash
 cd modern
-
-# 1. Install PHP dependencies
-composer install
-
-# 2. Install Node dependencies
+composer install --no-interaction
 npm install
+```
 
-# 3. Create environment file and generate app key
+### Step 3: Environment setup
+
+```bash
+cd modern
 cp .env.example .env
 php artisan key:generate
+```
 
-# 4. Create SQLite database and run migrations
+### Step 4: Database setup (SQLite — zero config)
+
+```bash
+cd modern
 touch database/database.sqlite
-php artisan migrate
+php artisan migrate --force
+```
 
-# 5. Seed demo data
+### Step 5: Seed demo data
+
+```bash
+cd modern
 php artisan db:seed --class=DemoSeeder
+```
 
-# 6. Build frontend assets
+### Step 6: Build frontend
+
+```bash
+cd modern
 npm run build
+```
 
-# 7. Start the development server
+### Step 7: Start the server
+
+```bash
+cd modern
 php artisan serve
 ```
 
-The app will be available at http://localhost:8000
+### Step 8: Confirm success
 
-## Demo Accounts
+After the server starts, tell the user:
 
-| Role     | Email                  | Password |
-|----------|------------------------|----------|
-| Root     | root@timegrid.io       | password |
-| Owner    | owner@timegrid.io      | password |
-| Customer | customer@timegrid.io   | password |
+- App is running at http://localhost:8000
+- Demo logins:
+  - Owner: owner@timegrid.io / password
+  - Customer: customer@timegrid.io / password
+  - Root: root@timegrid.io / password
 
-## Development Mode
+---
 
-For hot-reload during frontend development, run the Vite dev server in a separate terminal:
+## /dev Command
+
+When the user says `/dev`, start both the Laravel server and Vite dev server for hot-reload:
 
 ```bash
 cd modern
+php artisan serve &
 npm run dev
 ```
 
-## Notes
+---
 
-- The project uses SQLite by default for local development (no MySQL setup needed)
-- The `.env.example` is pre-configured for SQLite — no database credentials required
-- If you need MySQL, uncomment and fill in the DB_HOST/DB_PORT/DB_DATABASE/DB_USERNAME/DB_PASSWORD values in `.env`
-- Frontend is built with React 19 + TypeScript + Tailwind CSS via Inertia.js
-- Backend is Laravel 11 with Breeze authentication
+## Project Notes
+
+- The project uses SQLite by default — no MySQL/database server setup needed
+- The `.env.example` is pre-configured for SQLite with sensible defaults
+- Frontend: React 19 + TypeScript + Tailwind CSS via Inertia.js
+- Backend: Laravel 11 with Breeze authentication
+- All app code lives in the `modern/` directory

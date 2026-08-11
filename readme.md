@@ -116,13 +116,25 @@ reserved ──→ confirmed ──→ served
 
 ## Getting Started
 
-> For AI agents (Cursor, Claude, Copilot): see [`.cursorrules`](.cursorrules) for automated setup instructions.
+### One-command AI setup (Cursor / AI agents)
 
-### Prerequisites
+Clone the repo, open it in [Cursor](https://cursor.com), and type:
 
-- PHP 8.2+, Composer, Node.js 18+, npm
+```
+/setup
+```
 
-### Quick Start
+The AI will automatically install prerequisites, dependencies, set up the database, seed demo data, build the frontend, and start the server. No manual steps needed.
+
+For development mode with hot-reload:
+
+```
+/dev
+```
+
+See [`.cursorrules`](.cursorrules) for the full setup instructions the AI follows.
+
+### Manual Setup
 
 ```bash
 cd modern
@@ -146,15 +158,6 @@ Open [http://localhost:8000](http://localhost:8000).
 | Root | root@timegrid.io | password |
 | Owner | owner@timegrid.io | password |
 | Customer | customer@timegrid.io | password |
-
-### Development
-
-For hot-reload during frontend work:
-
-```bash
-cd modern
-npm run dev
-```
 
 ## Architecture
 
