@@ -27,7 +27,7 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 # Render Nginx config with dynamic PORT
-envsubst '${PORT}' < /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
+sed "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
 
 # Cache configuration for performance
 php artisan config:cache
