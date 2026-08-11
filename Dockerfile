@@ -39,16 +39,13 @@ COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-COPY composer.json composer.lock ./
+COPY . .
 RUN composer install \
     --no-dev \
     --no-interaction \
     --no-scripts \
     --prefer-dist \
     --optimize-autoloader
-
-COPY . .
-RUN composer dump-autoload --optimize
 
 RUN rm -rf node_modules tests .env .env.travis \
     && mkdir -p storage/framework/{sessions,views,cache} \
