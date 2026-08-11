@@ -1,9 +1,8 @@
 #!/bin/sh
-set -e
 
 cd /var/www
 
-export PORT="${PORT:-8080}"
+export PORT="${PORT:-10000}"
 
 # Create .env from example if missing
 if [ ! -f .env ]; then
@@ -18,22 +17,39 @@ if [ "$DB_CONNECTION" = "sqlite" ]; then
     chmod 664 storage/database.sqlite
 fi
 
+# Write env vars into .env for artisan
+{
+    echo "APP_ENV=${APP_ENV:-production}"
+    echo "APP_DEBUG=${APP_DEBUG:-false}"
+    echo "APP_KEY=${APP_KEY:-}"
+    echo "APP_URL=${APP_URL:-http://localhost}"
+    echo "DB_CONNECTION=${DB_CONNECTION:-sqlite}"
+    echo "CACHE_DRIVER=${CACHE_DRIVER:-array}"
+    echo "SESSION_DRIVER=${SESSION_DRIVER:-file}"
+    echo "QUEUE_DRIVER=${QUEUE_DRIVER:-sync}"
+    echo "MAIL_DRIVER=log"
+} > .env
+
 # Generate app key if not set
-if [ -z "$APP_KEY" ]; then
-    php artisan key:generate --force 2>/dev/null || true
-    export APP_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "changeme" ]; then
+    php artisan key:generate --force 2>&1 || true
+    APP_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
+    export APP_KEY
 fi
 
 # Render Nginx config with dynamic PORT
 sed "s/\${PORT}/$PORT/g" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
-# Ensure storage permissions
+# Ensure storage and bootstrap permissions
 chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
 
-# Run database migrations (non-fatal)
-php artisan migrate --force 2>/dev/null || echo "WARNING: Migration skipped"
+# Run database migrations
+php artisan migrate --force 2>&1 || echo "WARNING: Migration failed"
 
-# Seed if tables are empty
-php artisan db:seed --force 2>/dev/null || true
+# Seed data
+php artisan db:seed --force 2>&1 || true
+
+echo "==> TimeGrid starting on port $PORT"
 
 exec "$@"
