@@ -44,6 +44,9 @@ php artisan view:cache
 # Run database migrations
 php artisan migrate --force || echo "WARNING: Migration failed"
 
+# Seed demo data (idempotent — only runs on empty database)
+php artisan db:seed --force 2>/dev/null || echo "WARNING: Seeding skipped"
+
 # Create storage symlink if missing
 php artisan storage:link 2>/dev/null || true
 
