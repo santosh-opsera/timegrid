@@ -1,105 +1,183 @@
-<a href="#">
-    <img src="http://i.imgur.com/pUUoU6H.png" alt="timegrid.io" title="timegrid.io" align="right" />
-</a>
+# TimeGrid
 
-timegrid (Archived)
-============
+Online appointment booking platform. Businesses publish their available time slots, customers browse and book appointments.
 
-[![Build Status](https://travis-ci.org/timegridio/timegrid.svg?branch=master)](https://travis-ci.org/timegridio/timegrid)
-[![Code Climate](https://codeclimate.com/github/timegridio/timegrid/badges/gpa.svg)](https://codeclimate.com/github/timegridio/timegrid)
-[![Test Coverage](https://codeclimate.com/github/timegridio/timegrid/badges/coverage.svg)](https://codeclimate.com/github/timegridio/timegrid/coverage)
-[![Gitter](https://badges.gitter.im/timegrid-development/community.svg)](https://gitter.im/timegrid-development/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![License](https://img.shields.io/:license-AGPL--3.0-blue.svg?style=flat-square)](http://www.gnu.org/licenses/agpl-3.0.txt)
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+Modernized from the original [timegridio/timegrid](https://github.com/timegridio/timegrid) — rewritten with **Laravel 11**, **Inertia.js**, **React 19**, **TypeScript**, and **Tailwind CSS**.
 
-> **Timegrid** helps contractors and customers to find the perfect meeting time through *online appointments*.
+---
 
-<div style="text-align:center">
-  <img src="http://i.imgur.com/YOQBoVx.png" alt="Timegrid Backoffice Dashboard Screenshot">
-</div>
+## Screenshots
+
+<table>
+<tr>
+<td width="50%">
+
+**Landing Page**
+
+<img src="modern/docs/screenshots/01-landing.png" width="400" />
+
+</td>
+<td width="50%">
+
+**Booking Wizard**
+
+<img src="modern/docs/screenshots/02-booking-wizard.png" width="400" />
+
+</td>
+</tr>
+<tr>
+<td>
+
+**Owner Dashboard**
+
+<img src="modern/docs/screenshots/05-dashboard-owner.png" width="400" />
+
+</td>
+<td>
+
+**Customer Dashboard**
+
+<img src="modern/docs/screenshots/03-dashboard-customer.png" width="400" />
+
+</td>
+</tr>
+<tr>
+<td>
+
+**Business Management**
+
+<img src="modern/docs/screenshots/06-business-management.png" width="400" />
+
+</td>
+<td>
+
+**Agenda**
+
+<img src="modern/docs/screenshots/07-agenda.png" width="400" />
+
+</td>
+</tr>
+<tr>
+<td>
+
+**Business Directory**
+
+<img src="modern/docs/screenshots/08-directory.png" width="400" />
+
+</td>
+<td>
+
+**Login**
+
+<img src="modern/docs/screenshots/04-login.png" width="400" />
+
+</td>
+</tr>
+</table>
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 11 (PHP 8.2+) |
+| Frontend | React 19 + TypeScript |
+| Routing | Inertia.js |
+| Styling | Tailwind CSS |
+| Build | Vite |
+| Database | MySQL 8 / SQLite |
+| Auth | Laravel Breeze |
 
 ## Features
 
-  * Built with [**Laravel 5.3**](http://laravel.com/docs/5.3) framework for [**PHP**](http://php.net/)
-  * Classic and oAuth2 Sign-in/Sign-up with [Socialite](https://github.com/laravel/socialite)
-  * Business management
-    * Clients Addressbook
-    * Services
-    * Staff
-    * Availability
-    * Appointments
-  * Calendar sharing through [iCalendar link](https://en.wikipedia.org/wiki/ICalendar)
-  * Scheduling view with [fullcalendar](https://github.com/fullcalendar)
-  * Self-service reservation with datepicker
-  * Basic email notifications
-  * i18n Support
-  * Multiple Timezones Support
-  * Live chat with [TidioChat](https://www.tidiochat.com/)
-  * Admin GUI with [AdminLTE](https://github.com/almasaeed2010/AdminLTE) [Twitter Bootstrap 3](https://github.com/twbs/bootstrap) based theme.
+- **Public booking page** — customers browse services, pick date/time, and book (login required)
+- **Role-based dashboards** — owners manage businesses, customers view their appointments
+- **Vacancy-driven availability** — owners define time windows, system generates bookable slots
+- **Appointment lifecycle** — reserve, confirm, serve, or cancel with enforced state transitions
+- **Multi-step booking wizard** — 4-step flow with real-time availability checks
+- **Business management** — services, staff, contacts, vacancies, agenda, calendar
 
-[Future features here](https://github.com/timegridio/timegrid/issues?q=is%3Aissue+is%3Aopen+label%3Afeature-request)
+## User Roles
 
-## Documentation
+| Role | Can Do |
+|------|--------|
+| **Root** | Everything |
+| **Owner** | Create/manage businesses, services, staff, vacancies, agenda |
+| **Customer** | Browse businesses, book appointments, view own appointments |
 
-Read [the wiki](https://github.com/timegridio/timegrid/wiki)
+## Appointment State Machine
 
-## Installing
+```
+reserved ──→ confirmed ──→ served
+    │              │
+    └──→ canceled ←┘
+```
 
-Read the [INSTALLING](INSTALLING.md) section.
+## Getting Started
 
-Get started in 10 min with a [Docker image](https://github.com/timegridio/dockerfiles) for development environment.
+> For AI agents (Cursor, Claude, Copilot): see [`.cursorrules`](.cursorrules) for automated setup instructions.
 
-## Localization
+### Prerequisites
 
-Current supported user interface languages are:
+- PHP 8.2+, Composer, Node.js 18+, npm
 
-  * American English (`en_US`)
-  * Spanish (`es_ES` and `es_AR`)
-  * Italian (`it_IT`)
-  * French (`fr_FR`)
-  * Russian (`ru_RU`)
-  * Armenian (`am_HY`)
+### Quick Start
 
-Feel free to contribute with your preferred translation!
+```bash
+cd modern
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite
+php artisan migrate
+php artisan db:seed --class=DemoSeeder
+npm run build
+php artisan serve
+```
 
-## Appointment Library
+Open [http://localhost:8000](http://localhost:8000).
 
-Timegrid uses [Concierge package](https://github.com/timegridio/concierge) for dealing with appointments.
+### Demo Accounts
 
-![Timegrid Mindmap](http://i.imgur.com/gXBFMor.png)
+| Role | Email | Password |
+|------|-------|----------|
+| Root | root@timegrid.io | password |
+| Owner | owner@timegrid.io | password |
+| Customer | customer@timegrid.io | password |
 
-## Author
+### Development
 
-Timegrid is developed and maintained by [Ariel Vallese](http://alariva.com).
+For hot-reload during frontend work:
 
-## Contributing
+```bash
+cd modern
+npm run dev
+```
 
-Contributions are welcome. **Please read the following notes.**
+## Architecture
 
-## Special Thanks & Credits
-
-  * [PeGa!](https://www.linkedin.com/in/pega041) for infra support
-  * [Mohamed G.Hafez](https://github.com/mg-freelancer) for contributions
-  * [John Ezekiel](https://github.com/zeke8402) for friendly hints and creating a really nice [booking-app](https://github.com/zeke8402/booking-app)
-  * [Victor](https://github.com/pappavic) for testing and documentation contributions
-  * [Mohammad Hossein Mojtahedi](https://github.com/MHM5000) for doc review
-  * [Jose V Herrera](https://github.com/josevh) for contributions
-  * [Bruno Gangemi](https://github.com/brugasoft) for useful feedback
-  * [Calvin Roger S. Canas](https://github.com/calvincanas) for contributions
-  * [Khouadja Achraf](https://github.com/achrafkh) for contributions
-  * [Nick N. Huynh](https://github.com/finalblast) for contributions
-  * [Kashyap Sharma](https://github.com/Kashyap12) for contributions
-  * [Niharika Khanna](https://github.com/niharikak101) for contributions
-  * [Webearit.com](https://www.webearit.com/) for contribution on Italian translation
-  * [Draganrakovic](https://github.com/draganrakovic) for contributions
-  * [Nerxo](https://github.com/Nerxo) for contributions
-  * [Sahil Sharma](https://github.com/sahilsharma011) for contributions and smart suggestions
-  * [Mohammed Hicham](https://github.com/himan72) for contribution on French translation
-  * Ani Shahbazyan for contribution on Russian and Armenian translations
-  * Using modified icon originally made by [SimpleIcon](http://www.flaticon.com/authors/simpleicon) from www.flaticon.com
+```
+modern/
+├── app/
+│   ├── Enums/              # UserRole, AppointmentStatus, BookingStrategy
+│   ├── Http/Controllers/   # Inertia controllers + API v1
+│   ├── Models/             # Business, Service, Staff, Contact, Vacancy, Appointment
+│   ├── Policies/           # Role-based authorization
+│   └── Services/           # AvailabilityService, BookingService, SlotGenerator
+├── resources/js/
+│   ├── Components/         # Reusable UI components
+│   ├── Layouts/            # AuthenticatedLayout, GuestLayout
+│   └── Pages/              # Dashboard, Booking, Business/*
+├── database/
+│   ├── migrations/         # Schema definitions
+│   └── seeders/            # DemoSeeder
+└── routes/
+    ├── web.php             # Inertia routes
+    └── api.php             # Availability API
+```
 
 ## License
 
-Timegrid is open-sourced software licensed under the [AGPL](http://www.gnu.org/licenses/agpl-3.0-standalone.html)
-
-May all beings be happy.
+[MIT](https://opensource.org/licenses/MIT)
