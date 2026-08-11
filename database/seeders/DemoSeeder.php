@@ -20,17 +20,10 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        if (User::where('email', 'root@timegrid.io')->exists()) {
+        if (User::where('email', 'owner@timegrid.io')->exists()) {
             $this->command?->info('Demo data already exists, skipping.');
             return;
         }
-
-        $root = User::create([
-            'name' => 'Root Admin',
-            'email' => 'root@timegrid.io',
-            'password' => 'password',
-            'role' => UserRole::Root,
-        ]);
 
         $owner = User::create([
             'name' => 'Business Owner',
