@@ -43,11 +43,13 @@ RUN apk add --no-cache \
     freetype-dev \
     icu-dev \
     linux-headers \
-    sqlite-dev
+    sqlite-dev \
+    postgresql-dev
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
     pdo_mysql \
+    pdo_pgsql \
     pdo_sqlite \
     mbstring \
     zip \
@@ -82,6 +84,7 @@ RUN rm -rf node_modules tests .env docker-compose.yml \
     && mkdir -p database
 
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
+COPY docker/nginx/default.conf.template /etc/nginx/http.d/default.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

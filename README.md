@@ -59,7 +59,7 @@ Login page with email/password. Registration available for new users.
 | Routing | Inertia.js (SPA feel, no separate API) |
 | Styling | Tailwind CSS |
 | Build | Vite |
-| Database | MySQL 8 (SQLite for dev) |
+| Database | PostgreSQL / MySQL / SQLite |
 | Auth | Laravel Breeze |
 | Container | Docker + Docker Compose |
 
@@ -214,12 +214,26 @@ For production, override these in `.env` or pass via `docker compose`:
 | `DB_PASSWORD` | - | Database password |
 | `REDIS_HOST` | `127.0.0.1` | Use `redis` (service name) in Docker |
 
-### Deploying
+### Deploy to Render (free)
 
-This repo is deployment-ready for platforms that support Docker:
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+1. Fork this repo to your GitHub account
+2. Go to [render.com/deploy](https://render.com/deploy)
+3. Connect your GitHub repo and select the `only-claude` branch
+4. Render reads `render.yaml` and creates the web service + PostgreSQL database automatically
+5. After deploy, open a shell and seed demo data:
+   ```bash
+   php artisan db:seed --class=DemoSeeder
+   ```
+
+The `render.yaml` blueprint configures everything: free web service, free PostgreSQL, environment variables, and health checks.
+
+### Other platforms
+
+This repo also works on any Docker-capable platform:
 
 - **Railway** — connect repo, auto-detects `Dockerfile`
-- **Render** — connect repo, select Docker runtime
 - **Fly.io** — `fly launch`, auto-detects `Dockerfile`
 - **DigitalOcean App Platform** — connect repo, select Docker
 - **AWS ECS / GCP Cloud Run** — build image, push to registry, deploy

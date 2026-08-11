@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: timegrid
+    runtime: docker
+    plan: free
+    branch: only-claude
+    healthCheckPath: /
+    envVars:
+      - key: APP_NAME
+        value: TimeGrid
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromRenderService:
+          type: web
+          name: timegrid
+          property: host
+          prefix: https://
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: timegrid-db
+          property: connectionString
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: LOG_CHANNEL
+        value: stderr
+
+databases:
+  - name: timegrid-db
+    plan: free
+    databaseName: timegrid
+    user: timegrid
