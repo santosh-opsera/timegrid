@@ -5,8 +5,10 @@
 /tests/logs
 /build
 /bower_components
+/public/build
 .env
 .env.testing
 *.sublime-workspace
 .wakatime-project
 .DS_Store
+/.cursor/
