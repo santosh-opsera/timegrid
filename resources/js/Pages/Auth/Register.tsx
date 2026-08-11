@@ -12,6 +12,7 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        role: 'customer' as 'customer' | 'owner',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -101,6 +102,38 @@ export default function Register() {
                         message={errors.password_confirmation}
                         className="mt-2"
                     />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel value="I want to" />
+
+                    <div className="mt-2 flex gap-4">
+                        <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${data.role === 'customer' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                            <input
+                                type="radio"
+                                name="role"
+                                value="customer"
+                                checked={data.role === 'customer'}
+                                onChange={() => setData('role', 'customer')}
+                                className="sr-only"
+                            />
+                            Book appointments
+                        </label>
+
+                        <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border-2 px-4 py-3 text-sm font-medium transition ${data.role === 'owner' ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                            <input
+                                type="radio"
+                                name="role"
+                                value="owner"
+                                checked={data.role === 'owner'}
+                                onChange={() => setData('role', 'owner')}
+                                className="sr-only"
+                            />
+                            List my business
+                        </label>
+                    </div>
+
+                    <InputError message={errors.role} className="mt-2" />
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">
