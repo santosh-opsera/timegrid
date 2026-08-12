@@ -19,8 +19,20 @@ function formatDateTime(isoString: string): string {
     });
 }
 
-function formatStatus(status: string): string {
-    return status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
+function formatStatus(status: string, statusLabel?: string): string {
+    const raw = statusLabel || status;
+    const normalized =
+        raw === 'R'
+            ? 'reserved'
+            : raw === 'C'
+              ? 'confirmed'
+              : raw === 'A'
+                ? 'canceled'
+                : raw === 'S'
+                  ? 'served'
+                  : raw;
+
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1).replace(/_/g, ' ');
 }
 
 export default function Confirmation({ business, appointment }: ConfirmationProps) {
@@ -99,7 +111,7 @@ export default function Confirmation({ business, appointment }: ConfirmationProp
                                         <dt className="text-sm text-gray-500">{t('confirmation.status')}</dt>
                                         <dd>
                                             <span className="inline-flex rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                                                {formatStatus(appointment.status)}
+                                                {formatStatus(appointment.status, appointment.status_label)}
                                             </span>
                                         </dd>
                                     </div>
