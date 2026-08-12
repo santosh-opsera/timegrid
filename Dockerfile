@@ -6,7 +6,7 @@ FROM node:20-alpine AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 COPY vite.config.js tsconfig.json ./
 COPY resources ./resources
@@ -34,7 +34,6 @@ RUN apk add --no-cache \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql \
-        pdo_sqlite \
         gd \
         zip \
         bcmath \
