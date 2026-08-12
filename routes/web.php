@@ -160,6 +160,12 @@ Route::prefix('user')
 
         Route::get('dashboard', [WizardController::class, 'getDashboard'])->name('user.dashboard');
 
+        Route::get('profile', function () {
+            return \Inertia\Inertia::render('Profile/Edit', [
+                'user' => auth()->user(),
+            ]);
+        })->name('user.profile');
+
         Route::as('wizard.')->group(function (): void {
             Route::controller(WizardController::class)->group(function (): void {
                 Route::get('terms', 'getTerms')->name('terms');

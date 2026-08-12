@@ -111,9 +111,11 @@ class User extends Authenticatable
     /**
      * Determine whether the user owns the given business.
      */
-    public function isOwnerOf(int $businessId): bool
+    public function isOwnerOf(int|\Illuminate\Database\Eloquent\Model $business): bool
     {
-        return $this->businesses()->withTrashed()->get()->contains($businessId);
+        $businessId = $business instanceof \Illuminate\Database\Eloquent\Model ? $business->getKey() : $business;
+
+        return $this->businesses()->withTrashed()->where('businesses.id', $businessId)->exists();
     }
 
     /**

@@ -7,6 +7,9 @@ use App\Models\Preference;
 use App\Models\Role;
 use App\Models\User;
 use App\Observers\AuditObserver;
+use App\Policies\BusinessPolicy;
+use App\Policies\ContactPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Timegridio\Concierge\Models\Appointment;
 use Timegridio\Concierge\Models\Business;
@@ -45,6 +48,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Business::class, BusinessPolicy::class);
+        Gate::policy(Contact::class, ContactPolicy::class);
+
         $observer = AuditObserver::class;
 
         User::observe($observer);
