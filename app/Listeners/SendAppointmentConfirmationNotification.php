@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 use App\Events\AppointmentWasConfirmed;
 use App\TG\TransMail;
-use Fenos\Notifynder\Facades\Notifynder;
 
 class SendAppointmentConfirmationNotification
 {
@@ -30,12 +29,14 @@ class SendAppointmentConfirmationNotification
         $date = $event->appointment->start_at->toDateString();
         $businessName = $event->appointment->business->name;
 
-        Notifynder::category('appointment.confirm')
-                   ->from('App\Models\User', $event->user->id)
-                   ->to('Timegridio\Concierge\Models\Business', $event->appointment->business->id)
-                   ->url('http://localhost')
-                   ->extra(compact('businessName', 'code', 'date'))
-                   ->send();
+        logger()->info('Appointment confirmation notification', [
+            'category'     => 'appointment.confirm',
+            'user_id'      => $event->user->id,
+            'business_id'  => $event->appointment->business->id,
+            'businessName' => $businessName,
+            'code'         => $code,
+            'date'         => $date,
+        ]);
 
         if ($event->appointment->business->pref('disable_outbound_mailing')) {
             return;

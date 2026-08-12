@@ -35,7 +35,7 @@ class BusinessServiceController extends Controller
         logger()->info(sprintf('businessId:%s', $business->id));
 
         if ($business->services()->count() > plan('limits.services', $business->plan)) {
-            flash()->warning(trans('app.saas.plan_limit_reached'));
+            session()->flash('warning', trans('app.saas.plan_limit_reached'));
 
             return redirect()->back();
         }
@@ -75,7 +75,7 @@ class BusinessServiceController extends Controller
 
         logger()->info("Stored serviceId:{$service->id}");
 
-        flash()->success(trans('manager.service.msg.store.success'));
+        session()->flash('success', trans('manager.service.msg.store.success'));
 
         return redirect()->route('manager.business.service.show', [$business, $service]);
     }
@@ -138,7 +138,7 @@ class BusinessServiceController extends Controller
             $service->save();
         }
 
-        flash()->success(trans('manager.business.service.msg.update.success'));
+        session()->flash('success', trans('manager.business.service.msg.update.success'));
 
         return redirect()->route('manager.business.service.show', [$business, $service]);
     }
@@ -152,7 +152,7 @@ class BusinessServiceController extends Controller
 
         $service->forceDelete();
 
-        flash()->success(trans('manager.services.msg.destroy.success'));
+        session()->flash('success', trans('manager.services.msg.destroy.success'));
 
         return redirect()->route('manager.business.service.index', $business);
     }

@@ -70,7 +70,7 @@ class ServiceTypeController extends Controller
             $business->servicetypes()->save($servicetype);
         }
 
-        flash()->success(trans('servicetype.msg.update.success'));
+        session()->flash('success', trans('servicetype.msg.update.success'));
 
         return redirect()->route('manager.business.service.index', [$business]);
     }

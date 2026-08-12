@@ -37,7 +37,7 @@ class AddressbookController extends Controller
         logger()->info(sprintf('businessId:%s', $business->id));
 
         if ($business->contacts()->count() > plan('limits.contacts', $business->plan)) {
-            flash()->warning(trans('app.saas.plan_limit_reached'));
+            session()->flash('warning', trans('app.saas.plan_limit_reached'));
 
             return redirect()->back();
         }
@@ -64,14 +64,14 @@ class AddressbookController extends Controller
         $contact = $business->addressbook()->register($validated);
 
         if (! $contact->wasRecentlyCreated) {
-            flash()->warning(trans('manager.contacts.msg.store.warning_showing_existing_contact'));
+            session()->flash('warning', trans('manager.contacts.msg.store.warning_showing_existing_contact'));
 
             return redirect()->route('manager.addressbook.show', [$business, $contact]);
         }
 
         event(new NewContactWasRegistered($contact));
 
-        flash()->success(trans('manager.contacts.msg.store.success'));
+        session()->flash('success', trans('manager.contacts.msg.store.success'));
 
         return redirect()->route('manager.addressbook.show', [$business, $contact]);
     }
@@ -132,7 +132,7 @@ class AddressbookController extends Controller
 
         $contact = $business->addressbook()->update($contact, $data, $notes);
 
-        flash()->success(trans('manager.contacts.msg.update.success'));
+        session()->flash('success', trans('manager.contacts.msg.update.success'));
 
         return redirect()->route('manager.addressbook.show', [$business, $contact]);
     }
@@ -146,7 +146,7 @@ class AddressbookController extends Controller
 
         $business->addressbook()->remove($contact);
 
-        flash()->success(trans('manager.contacts.msg.destroy.success'));
+        session()->flash('success', trans('manager.contacts.msg.destroy.success'));
 
         return redirect()->route('manager.addressbook.index', $business);
     }

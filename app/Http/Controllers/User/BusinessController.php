@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Fenos\Notifynder\Facades\Notifynder;
+use App\Notifications\BusinessActivityNotification;
 use Inertia\Inertia;
 use Inertia\Response;
 use Timegridio\Concierge\Concierge;
@@ -24,13 +24,14 @@ class BusinessController extends Controller
 
         $business->load(['services', 'category']);
 
-        $businessName = $business->name;
-        Notifynder::category('user.visitedShowroom')
-            ->from('App\Models\User', auth()->id())
-            ->to('Timegridio\Concierge\Models\Business', $business->id)
-            ->url('http://localhost')
-            ->extra(compact('businessName'))
-            ->send();
+        if ($user = auth()->user()) {
+            $businessName = $business->name;
+            $business->notify(new BusinessActivityNotification(
+                'user.visitedShowroom',
+                $user,
+                compact('businessName'),
+            ));
+        }
 
         $available = $this->concierge->business($business)->isBookable('today', 30);
 

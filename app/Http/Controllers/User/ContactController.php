@@ -8,7 +8,7 @@ use App\Events\NewContactWasRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
-use Fenos\Notifynder\Facades\Notifynder;
+use App\Notifications\BusinessActivityNotification;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -61,7 +61,7 @@ class ContactController extends Controller
 
         $contact = $business->addressbook()->copyFrom($existingContact, $user->id);
 
-        flash()->success(trans('user.contacts.msg.store.associated_existing_contact'));
+        session()->flash('success', trans('user.contacts.msg.store.associated_existing_contact'));
 
         return redirect()->route('user.business.contact.show', [$business, $contact]);
     }
@@ -73,12 +73,11 @@ class ContactController extends Controller
         $validated = $request->validated();
 
         $businessName = $business->name;
-        Notifynder::category('user.subscribedBusiness')
-            ->from('App\Models\User', auth()->id())
-            ->to('Timegridio\Concierge\Models\Business', $business->id)
-            ->url('http://localhost')
-            ->extra(compact('businessName'))
-            ->send();
+        $business->notify(new BusinessActivityNotification(
+            'user.subscribedBusiness',
+            auth()->user(),
+            compact('businessName'),
+        ));
 
         $contact = $business->addressbook()->register($validated);
 
@@ -86,7 +85,7 @@ class ContactController extends Controller
 
         event(new NewContactWasRegistered($contact));
 
-        flash()->success(trans('user.contacts.msg.store.success'));
+        session()->flash('success', trans('user.contacts.msg.store.success'));
 
         return redirect()->route('user.business.contact.show', [$business, $contact]);
     }
@@ -151,7 +150,7 @@ class ContactController extends Controller
 
         $contact = $business->addressbook()->update($contact, $data, $notes);
 
-        flash()->success(trans('user.contacts.msg.update.success'));
+        session()->flash('success', trans('user.contacts.msg.update.success'));
 
         return redirect()->route('user.business.contact.show', [$business, $contact]);
     }
@@ -165,7 +164,7 @@ class ContactController extends Controller
 
         $business->addressbook()->remove($contact);
 
-        flash()->success(trans('user.contacts.msg.destroy.success'));
+        session()->flash('success', trans('user.contacts.msg.destroy.success'));
 
         return redirect()->route('user.business.contact.index', $business);
     }

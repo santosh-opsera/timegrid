@@ -39,7 +39,7 @@ class UserPreferencesController extends Controller
 
         $this->setUserPreferences($validated);
 
-        flash()->success(trans('user.msg.preferences.success'));
+        session()->flash('success', trans('user.msg.preferences.success'));
 
         return redirect()->back();
     }

@@ -8,10 +8,10 @@ use App\Exceptions\BusinessAlreadyRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreBusinessRequest;
 use App\Http\Requests\UpdateBusinessRequest;
+use App\Notifications\BusinessActivityNotification;
 use App\TG\Business\Dashboard;
 use App\TG\BusinessService;
 use Carbon\Carbon;
-use Fenos\Notifynder\Facades\Notifynder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use Inertia\Inertia;
@@ -38,7 +38,7 @@ class BusinessController extends Controller
         if ($businesses->count() === 1) {
             logger()->info('Only one business to show');
 
-            flash()->success(trans('manager.businesses.msg.index.only_one_found'));
+            session()->flash('success', trans('manager.businesses.msg.index.only_one_found'));
 
             return redirect()->route('manager.business.show', $businesses->first());
         }
@@ -87,20 +87,19 @@ class BusinessController extends Controller
 
             $this->businessService->setup($business);
         } catch (BusinessAlreadyRegistered $exception) {
-            flash()->error(trans('manager.businesses.msg.store.business_already_exists'));
+            session()->flash('error', trans('manager.businesses.msg.store.business_already_exists'));
 
             return redirect()->back()->withInput($validated);
         }
 
         $businessName = $business->name;
-        Notifynder::category('user.registeredBusiness')
-            ->from('App\Models\User', auth()->id())
-            ->to('Timegridio\Concierge\Models\Business', $business->id)
-            ->url('http://localhost')
-            ->extra(compact('businessName'))
-            ->send();
+        $business->notify(new BusinessActivityNotification(
+            'user.registeredBusiness',
+            auth()->user(),
+            compact('businessName'),
+        ));
 
-        flash()->success(trans('manager.businesses.msg.store.success'));
+        session()->flash('success', trans('manager.businesses.msg.store.success'));
 
         return redirect()->route('manager.business.service.create', $business);
     }
@@ -114,9 +113,11 @@ class BusinessController extends Controller
 
         session()->put('selected.business', $business);
 
-        $notifications = Notifynder::entity(Business::class)->getNotRead($business->id, 20);
+        $notifications = format_business_notifications(
+            $business->unreadNotifications()->limit(20)->get()
+        );
 
-        Notifynder::entity(Business::class)->readAll($business->id);
+        $business->unreadNotifications->markAsRead();
 
         $this->time->timezone($business->timezone);
 
@@ -177,7 +178,7 @@ class BusinessController extends Controller
         $this->businessService->update($business, $data);
         $this->businessService->setCategory($business, $category);
 
-        flash()->success(trans('manager.businesses.msg.update.success'));
+        session()->flash('success', trans('manager.businesses.msg.update.success'));
 
         return redirect()->route('manager.business.show', compact('business'));
     }
@@ -192,7 +193,7 @@ class BusinessController extends Controller
 
         $this->businessService->deactivate($business);
 
-        flash()->success(trans('manager.businesses.msg.destroy.success'));
+        session()->flash('success', trans('manager.businesses.msg.destroy.success'));
 
         return redirect()->route('manager.business.index');
     }

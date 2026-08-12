@@ -4,64 +4,43 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use App\Events\NewUserWasRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Foundation\Auth\RegistersUsers;
-use Illuminate\Support\Facades\Validator as ValidatorFacade;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class RegisterController extends Controller
 {
-    use RegistersUsers;
-
-    protected string $redirectTo = '/home';
-
-    public function __construct()
+    public function showRegistrationForm(): Response
     {
-        $this->middleware('guest');
+        return Inertia::render('Auth/Register');
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    protected function validator(array $data): Validator
+    public function register(Request $request): RedirectResponse
     {
-        $rules = [
-            'name'                 => ['required', 'string', 'max:255'],
-            'email'                => ['required', 'email', 'max:255', 'unique:users'],
-            'password'             => ['required', 'confirmed', 'min:6'],
-            'g-recaptcha-response' => ['required', 'captcha'],
-            'allow_register'       => ['required', 'accepted'],
-        ];
-
-        if (app()->environment('local') || app()->environment('testing')) {
-            unset($rules['g-recaptcha-response']);
-        }
-
-        $data['allow_register'] = config('root.app.allow_register', true);
-
-        $messages = [
-            'allow_register.accepted' => trans('app.allow_register'),
-        ];
-
-        return ValidatorFacade::make($data, $rules, $messages);
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    protected function create(array $data): User
-    {
-        $user = User::create([
-            'username' => md5("{$data['name']}/{$data['email']}"),
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => bcrypt($data['password']),
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        event(new NewUserWasRegistered($user));
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'username' => md5("{$validated['name']}/{$validated['email']}"),
+            'password' => Hash::make($validated['password']),
+        ]);
 
-        return $user;
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect('/home');
     }
 }

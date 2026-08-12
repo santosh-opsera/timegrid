@@ -34,7 +34,7 @@ class BusinessController extends Controller
 
         $baseurl = url()->to('/'.$slug);
 
-        flash()->success(trans('app.msg.slug_is_available', compact('baseurl')));
+        session()->flash('success', trans('app.msg.slug_is_available', compact('baseurl')));
 
         return redirect()->to('/login');
     }

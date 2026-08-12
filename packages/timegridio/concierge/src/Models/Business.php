@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Timegridio\Concierge\Addressbook;
 use Timegridio\Concierge\Traits\IsIntoDomain;
@@ -17,6 +18,7 @@ use Timegridio\Concierge\Traits\Preferenceable;
 class Business extends Model
 {
     use IsIntoDomain;
+    use Notifiable;
     use Preferenceable;
     use SoftDeletes;
 

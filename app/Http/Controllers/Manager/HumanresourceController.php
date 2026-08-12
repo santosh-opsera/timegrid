@@ -35,7 +35,7 @@ class HumanresourceController extends Controller
         logger()->info(sprintf('businessId:%s', $business->id));
 
         if ($business->humanresources()->count() > plan('limits.specialists', $business->plan)) {
-            flash()->warning(trans('app.saas.plan_limit_reached'));
+            session()->flash('warning', trans('app.saas.plan_limit_reached'));
 
             return redirect()->back();
         }
@@ -67,7 +67,7 @@ class HumanresourceController extends Controller
         $humanresource->business()->associate($business->id);
         $humanresource->save();
 
-        flash()->success(trans('manager.humanresources.msg.store.success'));
+        session()->flash('success', trans('manager.humanresources.msg.store.success'));
 
         return redirect()->route('manager.business.humanresource.show', [$business, $humanresource]);
     }
@@ -114,7 +114,7 @@ class HumanresourceController extends Controller
         $humanresource->fill($validated);
         $humanresource->save();
 
-        flash()->success(trans('manager.humanresources.msg.update.success'));
+        session()->flash('success', trans('manager.humanresources.msg.update.success'));
 
         return redirect()->route('manager.business.humanresource.show', [$business, $humanresource]);
     }
@@ -128,7 +128,7 @@ class HumanresourceController extends Controller
 
         $humanresource->delete();
 
-        flash()->success(trans('manager.humanresources.msg.destroy.success'));
+        session()->flash('success', trans('manager.humanresources.msg.destroy.success'));
 
         return redirect()->route('manager.business.humanresource.index', $business);
     }

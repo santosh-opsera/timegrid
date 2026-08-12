@@ -55,6 +55,34 @@ if (! function_exists('str_link')) {
     }
 }
 
+if (! function_exists('format_business_notifications')) {
+    /**
+     * @param  \Illuminate\Support\Collection<int, \Illuminate\Notifications\DatabaseNotification>|\Illuminate\Support\Collection<int, mixed>  $notifications
+     * @return list<array<string, mixed>>
+     */
+    function format_business_notifications($notifications): array
+    {
+        return $notifications->map(function ($notification) {
+            $data = is_array($notification->data ?? null)
+                ? $notification->data
+                : (array) ($notification->data ?? []);
+
+            $category = (string) ($data['category'] ?? '');
+            $fromName = (string) ($data['from']['name'] ?? 'Someone');
+            $extra = (array) ($data['extra'] ?? []);
+
+            return [
+                'id'         => $notification->id,
+                'category'   => $category,
+                'body'       => trans("notifications.{$category}", ['user' => $fromName] + $extra),
+                'url'        => $data['url'] ?? null,
+                'created_at' => $notification->created_at?->toIso8601String(),
+                'read_at'    => $notification->read_at?->toIso8601String(),
+            ];
+        })->values()->all();
+    }
+}
+
 if (! function_exists('docs_url')) {
     /**
      * Generate a link to user manual documentation.

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
-use Fenos\Notifynder\Facades\Notifynder;
 use Inertia\Inertia;
 use Inertia\Response;
 use Timegridio\Concierge\Models\Business;
@@ -19,7 +18,9 @@ class BusinessNotificationsController extends Controller
 
         $this->authorize('manage', $business);
 
-        $notifications = Notifynder::entity(Business::class)->getAll($business->id);
+        $notifications = format_business_notifications(
+            $business->notifications()->latest()->get()
+        );
 
         return Inertia::render('Business/Notifications/Index', [
             'business'      => $business,

@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Models\User;
 use Carbon\Carbon;
-use Fenos\Notifynder\Facades\Notifynder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -58,17 +57,17 @@ class AgendaController extends Controller
                 if (! $contact = auth()->user()->getContactSubscribedTo($business->id)) {
                     logger()->info('  [ADVICE] User not subscribed to Business');
 
-                    flash()->warning(trans('user.booking.msg.you_are_not_subscribed_to_business'));
+                    session()->flash('warning', trans('user.booking.msg.you_are_not_subscribed_to_business'));
 
                     return redirect()->route('user.businesses.home', compact('business'));
                 }
             }
 
-            Notifynder::category('user.checkingVacancies')
-                ->from('App\Models\User', auth()->id())
-                ->to('Timegridio\Concierge\Models\Business', $business->id)
-                ->url('http://localhost')
-                ->send();
+            logger()->info('User checking vacancies', [
+                'category'    => 'user.checkingVacancies',
+                'user_id'     => auth()->id(),
+                'business_id' => $business->id,
+            ]);
         }
 
         $date = $request->input('date', 'today');
@@ -127,7 +126,7 @@ class AgendaController extends Controller
             if (! $contact) {
                 logger()->info('[ADVICE] Not subscribed');
 
-                flash()->warning(trans('user.booking.msg.store.not-registered'));
+                session()->flash('warning', trans('user.booking.msg.store.not-registered'));
 
                 return redirect()->back();
             }
@@ -163,7 +162,7 @@ class AgendaController extends Controller
 
             logger()->info("DUPLICATED Appointment with CODE:{$code}");
 
-            flash()->warning(trans('user.booking.msg.store.sorry_duplicated', compact('code')));
+            session()->flash('warning', trans('user.booking.msg.store.sorry_duplicated', compact('code')));
 
             if ($isOwner) {
                 return redirect()->route('manager.business.agenda.index', compact('business'));
@@ -175,7 +174,7 @@ class AgendaController extends Controller
         if ($appointment === false) {
             logger()->info('[ADVICE] Unable to book');
 
-            flash()->warning(trans('user.booking.msg.store.error'));
+            session()->flash('warning', trans('user.booking.msg.store.error'));
 
             return redirect()->back();
         }
@@ -184,7 +183,7 @@ class AgendaController extends Controller
 
         logger()->info('Appointment saved successfully');
 
-        flash()->success(trans('user.booking.msg.store.success', ['code' => $appointment->code]));
+        session()->flash('success', trans('user.booking.msg.store.success', ['code' => $appointment->code]));
 
         if (! $issuerId) {
             event(new NewSoftAppointmentWasBooked($appointment));
@@ -230,13 +229,13 @@ class AgendaController extends Controller
             })->first();
 
         if (! $appointment) {
-            flash()->error(trans('user.booking.msg.validate.error.no-appointment-was-found'));
+            session()->flash('error', trans('user.booking.msg.validate.error.no-appointment-was-found'));
 
             return redirect()->to('/');
         }
 
         if ($appointment->status == Appointment::STATUS_CONFIRMED) {
-            flash()->success(trans('user.booking.msg.validate.success.your-appointment-is-already-confirmed'));
+            session()->flash('success', trans('user.booking.msg.validate.success.your-appointment-is-already-confirmed'));
 
             return Inertia::render('Booking/Show', [
                 'appointment' => $appointment,
@@ -245,7 +244,7 @@ class AgendaController extends Controller
 
         $appointment->doConfirm();
 
-        flash()->success(trans('user.booking.msg.validate.success.your-appointment-was-confirmed'));
+        session()->flash('success', trans('user.booking.msg.validate.success.your-appointment-was-confirmed'));
 
         return Inertia::render('Booking/Show', [
             'appointment' => $appointment,

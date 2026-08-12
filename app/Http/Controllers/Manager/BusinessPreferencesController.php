@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
-use Fenos\Notifynder\Facades\Notifynder;
+use App\Notifications\BusinessActivityNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -49,14 +49,13 @@ class BusinessPreferencesController extends Controller
         $this->setBusinessPreferences($business, $validated);
 
         $businessName = $business->name;
-        Notifynder::category('user.updatedBusinessPreferences')
-            ->from('App\Models\User', auth()->id())
-            ->to('Timegridio\Concierge\Models\Business', $business->id)
-            ->url('http://localhost')
-            ->extra(compact('businessName'))
-            ->send();
+        $business->notify(new BusinessActivityNotification(
+            'user.updatedBusinessPreferences',
+            auth()->user(),
+            compact('businessName'),
+        ));
 
-        flash()->success(trans('manager.businesses.msg.preferences.success'));
+        session()->flash('success', trans('manager.businesses.msg.preferences.success'));
 
         return redirect()->route('manager.business.show', $business);
     }

@@ -41,7 +41,7 @@ class BusinessVacancyController extends Controller
             ->generateAvailability('today', $daysQuantity);
 
         if ($business->services->isEmpty()) {
-            flash()->warning(trans('manager.vacancies.msg.edit.no_services'));
+            session()->flash('warning', trans('manager.vacancies.msg.edit.no_services'));
         }
 
         $advanced = $business->services->count() > 3 || $business->pref('vacancy_edit_advanced_mode');
@@ -121,14 +121,14 @@ class BusinessVacancyController extends Controller
         if (! $changed) {
             logger()->warning('Nothing to update');
 
-            flash()->warning(trans('manager.vacancies.msg.store.nothing_changed'));
+            session()->flash('warning', trans('manager.vacancies.msg.store.nothing_changed'));
 
             return redirect()->back();
         }
 
         logger()->info('Vacancies updated');
 
-        flash()->success(trans('manager.vacancies.msg.store.success'));
+        session()->flash('success', trans('manager.vacancies.msg.store.success'));
 
         return redirect()->route('manager.business.show', [$business]);
     }
@@ -156,7 +156,7 @@ class BusinessVacancyController extends Controller
         if (! $this->concierge->vacancies()->updateBatch($business, $publishedVacancies)) {
             logger()->warning('Nothing to update');
 
-            flash()->warning(trans('manager.vacancies.msg.store.nothing_changed'));
+            session()->flash('warning', trans('manager.vacancies.msg.store.nothing_changed'));
 
             return redirect()->back();
         }
@@ -167,7 +167,7 @@ class BusinessVacancyController extends Controller
 
         logger()->info('Vacancies updated');
 
-        flash()->success(trans('manager.vacancies.msg.store.success'));
+        session()->flash('success', trans('manager.vacancies.msg.store.success'));
 
         return redirect()->route('manager.business.show', [$business]);
     }
@@ -189,7 +189,7 @@ class BusinessVacancyController extends Controller
             ->buildTimetable($vacancies, 'today', $daysQuantity);
 
         if ($business->services()->count() === 0) {
-            flash()->warning(trans('manager.vacancies.msg.edit.no_services'));
+            session()->flash('warning', trans('manager.vacancies.msg.edit.no_services'));
         }
 
         return Inertia::render('Business/Vacancies/Index', [

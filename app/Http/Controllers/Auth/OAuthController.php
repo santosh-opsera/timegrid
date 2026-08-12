@@ -4,54 +4,60 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use App\AuthenticateUser;
-use App\AuthenticateUserListener;
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\RedirectsUsers;
-use Illuminate\Foundation\Auth\ThrottlesLogins;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
-class OAuthController extends Controller implements AuthenticateUserListener
+class OAuthController extends Controller
 {
-    use RedirectsUsers, ThrottlesLogins;
-
-    /** @var list<string> */
     private const ALLOWED_PROVIDERS = ['google', 'facebook', 'github'];
-
-    public function __construct()
-    {
-        $this->redirectPath = route('home');
-    }
 
     public function redirectToProvider(string $provider): SymfonyRedirectResponse
     {
         $this->validateProvider($provider);
 
-        logger()->info(__METHOD__);
-        logger()->info(sprintf('provider:%s', $provider));
-
         return Socialite::driver($provider)->redirect();
     }
 
-    public function handleProviderCallback(
-        string $provider,
-        AuthenticateUser $authenticateUser,
-        Request $request
-    ): RedirectResponse|SymfonyRedirectResponse {
+    public function handleProviderCallback(string $provider, Request $request): RedirectResponse
+    {
         $this->validateProvider($provider);
 
-        $hasCode = $request->has('code');
+        if (!$request->has('code')) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'OAuth authorization was cancelled.']);
+        }
 
-        return $authenticateUser->execute($provider, $hasCode, $this);
-    }
+        try {
+            $socialUser = Socialite::driver($provider)->user();
+        } catch (\Exception $e) {
+            logger()->warning('OAuth callback failed', ['provider' => $provider, 'error' => $e->getMessage()]);
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Unable to authenticate with ' . ucfirst($provider) . '.']);
+        }
 
-    public function userHasLoggedIn(mixed $user): RedirectResponse
-    {
-        return redirect()->intended($this->redirectPath());
+        $user = User::where('email', $socialUser->getEmail())->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
+                'email' => $socialUser->getEmail(),
+                'username' => Str::slug($socialUser->getNickname() ?? $socialUser->getName() ?? Str::random(8)),
+                'password' => Hash::make(Str::random(32)),
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        Auth::login($user, true);
+
+        return redirect()->intended('/home');
     }
 
     private function validateProvider(string $provider): void
