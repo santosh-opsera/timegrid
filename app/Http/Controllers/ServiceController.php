@@ -30,7 +30,12 @@ class ServiceController extends Controller
             'color' => 'nullable|string|max:20',
         ]);
 
-        $business->services()->create($validated);
+        $business->services()->create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? '',
+            'duration' => $validated['duration'],
+            'color' => $validated['color'] ?? null,
+        ]);
         return back()->with('success', 'Service created!');
     }
 
@@ -43,7 +48,6 @@ class ServiceController extends Controller
             'description' => 'nullable|string',
             'duration' => 'required|integer|min:5|max:480',
             'color' => 'nullable|string|max:20',
-            'is_active' => 'boolean',
         ]);
 
         $service->update($validated);

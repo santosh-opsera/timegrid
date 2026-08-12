@@ -31,7 +31,7 @@ export interface Service {
     description: string | null;
     duration: number;
     color: string;
-    is_active: boolean;
+    is_active?: boolean;
 }
 
 export interface Staff {
@@ -73,7 +73,9 @@ export interface Appointment {
     staff_id: number | null;
     status: string;
     start_at: string;
-    end_at: string;
+    end_at?: string;
+    finish_at?: string;
+    status_label?: string;
     duration: number;
     comments: string | null;
     hash: string;

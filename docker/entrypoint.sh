@@ -41,11 +41,21 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run database migrations
-php artisan migrate --force || echo "WARNING: Migration failed"
+# Avoid mutating an already-provisioned shared database
+EXISTING_SCHEMA=$(php -r '
+require "vendor/autoload.php";
+$app = require "bootstrap/app.php";
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+echo Illuminate\Support\Facades\Schema::hasTable("businesses") ? "yes" : "no";
+' 2>/dev/null || echo "no")
 
-# Seed demo data (idempotent — only runs on empty database)
-php artisan db:seed --force 2>/dev/null || echo "WARNING: Seeding skipped"
+if [ "$EXISTING_SCHEMA" = "yes" ]; then
+    echo "Existing database schema detected; skipping migrate/seed"
+else
+    php artisan migrate --force || echo "WARNING: Migration failed"
+    php artisan db:seed --force 2>/dev/null || echo "WARNING: Seeding skipped"
+fi
 
 # Create storage symlink if missing
 php artisan storage:link 2>/dev/null || true

@@ -13,6 +13,7 @@ class ContactController extends Controller
     {
         $this->authorize('manage', $business);
         $contacts = $business->contacts()->with('user')->latest()->paginate(20);
+
         return Inertia::render('Business/Contacts/Index', [
             'business' => $business,
             'contacts' => $contacts,
@@ -31,7 +32,17 @@ class ContactController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $business->contacts()->create($validated);
+        $contact = Contact::create([
+            'firstname' => $validated['firstname'],
+            'lastname' => $validated['lastname'] ?? '',
+            'email' => $validated['email'] ?? null,
+            'mobile' => $validated['phone'] ?? null,
+            'gender' => 'F',
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        $business->contacts()->attach($contact->id);
+
         return back()->with('success', 'Contact added!');
     }
 
@@ -47,14 +58,22 @@ class ContactController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $contact->update($validated);
+        $contact->update([
+            'firstname' => $validated['firstname'],
+            'lastname' => $validated['lastname'] ?? '',
+            'email' => $validated['email'] ?? null,
+            'mobile' => $validated['phone'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
         return back()->with('success', 'Contact updated!');
     }
 
     public function destroy(Business $business, Contact $contact)
     {
         $this->authorize('manage', $business);
-        $contact->delete();
+        $business->contacts()->detach($contact->id);
+
         return back()->with('success', 'Contact removed.');
     }
 }

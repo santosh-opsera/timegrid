@@ -12,10 +12,10 @@ use Illuminate\Support\Str;
 
 class BookingService
 {
-    public function book(Business $business, Service $service, Contact $contact, string $date, string $time, ?string $comments = null): Appointment
+    public function book(Business $business, Service $service, Contact $contact, string $date, string $time, ?string $comments = null, ?int $issuerId = null): Appointment
     {
         $startAt = Carbon::parse("{$date} {$time}", $business->timezone);
-        $endAt = $startAt->copy()->addMinutes($service->duration);
+        $finishAt = $startAt->copy()->addMinutes((int) $service->duration);
 
         $exists = Appointment::where('business_id', $business->id)
             ->where('service_id', $service->id)
@@ -28,23 +28,24 @@ class BookingService
         }
 
         return Appointment::create([
+            'issuer_id' => $issuerId,
             'business_id' => $business->id,
             'service_id' => $service->id,
             'contact_id' => $contact->id,
             'status' => AppointmentStatus::Reserved,
             'start_at' => $startAt,
-            'end_at' => $endAt,
-            'duration' => $service->duration,
+            'finish_at' => $finishAt,
+            'duration' => (int) $service->duration,
             'comments' => $comments,
             'hash' => Str::random(32),
         ]);
     }
 
     private const VALID_TRANSITIONS = [
-        'reserved' => ['confirmed', 'canceled'],
-        'confirmed' => ['served', 'canceled'],
-        'canceled' => [],
-        'served' => [],
+        'R' => ['C', 'A'],
+        'C' => ['S', 'A'],
+        'A' => [],
+        'S' => [],
     ];
 
     public function confirm(Appointment $appointment): Appointment
@@ -79,7 +80,7 @@ class BookingService
 
         $allowed = self::VALID_TRANSITIONS[$current] ?? [];
 
-        if (!in_array($target->value, $allowed, true)) {
+        if (! in_array($target->value, $allowed, true)) {
             throw new \RuntimeException("Cannot transition from '{$current}' to '{$target->value}'.");
         }
     }

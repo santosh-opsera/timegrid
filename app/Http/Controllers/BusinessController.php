@@ -45,7 +45,7 @@ class BusinessController extends Controller
         }
 
         $business = Business::create($validated);
-        $business->owners()->attach($request->user()->id, ['role' => 'owner']);
+        $business->owners()->attach($request->user()->id);
 
         return redirect()->route('businesses.show', $business)->with('success', 'Business created!');
     }
@@ -58,7 +58,7 @@ class BusinessController extends Controller
 
         $stats = [
             'total_appointments' => $business->appointments()->count(),
-            'upcoming' => $business->appointments()->where('start_at', '>=', now())->whereNot('status', 'canceled')->count(),
+            'upcoming' => $business->appointments()->where('start_at', '>=', now())->whereNot('status', \App\Enums\AppointmentStatus::Canceled->value)->count(),
             'contacts' => $business->contacts()->count(),
             'services' => $business->services()->count(),
         ];

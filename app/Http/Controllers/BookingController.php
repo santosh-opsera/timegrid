@@ -13,9 +13,7 @@ class BookingController extends Controller
 {
     public function show(Business $business)
     {
-        $business->load(['services' => function ($q) {
-            $q->where('is_active', true);
-        }]);
+        $business->load('services');
 
         return Inertia::render('Booking/Show', [
             'business' => $business,
@@ -35,27 +33,52 @@ class BookingController extends Controller
             'comments' => 'nullable|string|max:1000',
         ]);
 
-        $service = $business->services()->where('is_active', true)->findOrFail($validated['service_id']);
+        $service = $business->services()->findOrFail($validated['service_id']);
 
         $user = $request->user();
 
-        $contact = Contact::firstOrCreate(
-            ['business_id' => $business->id, 'email' => $validated['email']],
-            [
+        $contact = Contact::query()
+            ->where('email', $validated['email'])
+            ->where(function ($query) use ($user) {
+                $query->whereNull('user_id');
+                if ($user) {
+                    $query->orWhere('user_id', $user->id);
+                }
+            })
+            ->first();
+
+        if (! $contact) {
+            $contact = Contact::create([
                 'firstname' => $validated['firstname'],
                 'lastname' => $validated['lastname'] ?? '',
-                'phone' => $validated['phone'] ?? null,
-                'user_id' => $user->id,
-            ]
-        );
-
-        if (!$contact->user_id) {
+                'email' => $validated['email'],
+                'mobile' => $validated['phone'] ?? null,
+                'gender' => 'F',
+                'user_id' => $user?->id,
+            ]);
+        } elseif (! $contact->user_id && $user) {
             $contact->update(['user_id' => $user->id]);
         }
 
+        if (! $business->contacts()->where('contacts.id', $contact->id)->exists()) {
+            $business->contacts()->attach($contact->id);
+        }
+
         try {
-            $appointment = $bookingService->book($business, $service, $contact, $validated['date'], $validated['time'], $validated['comments'] ?? null);
-            return redirect()->route('booking.confirmation', ['business' => $business, 'appointment' => $appointment->hash]);
+            $appointment = $bookingService->book(
+                $business,
+                $service,
+                $contact,
+                $validated['date'],
+                $validated['time'],
+                $validated['comments'] ?? null,
+                $user?->id,
+            );
+
+            return redirect()->route('booking.confirmation', [
+                'business' => $business,
+                'appointment' => $appointment->hash,
+            ]);
         } catch (\RuntimeException $e) {
             return back()->withErrors(['time' => $e->getMessage()]);
         }

@@ -51,7 +51,7 @@ export default function Show({ business }: ShowProps) {
         ? splitName(user.name)
         : { firstname: '', lastname: '' };
 
-    const services = (business.services ?? []).filter((s) => s.is_active);
+    const services = (business.services ?? []).filter((s) => s.is_active !== false);
 
     const stepLabels: Record<string, string> = {
         service: t('booking.step_service'),

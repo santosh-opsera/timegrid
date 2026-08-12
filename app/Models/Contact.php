@@ -4,23 +4,32 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'business_id',
         'user_id',
         'firstname',
         'lastname',
         'email',
-        'phone',
+        'mobile',
+        'gender',
+        'nin',
+        'occupation',
+        'postal_address',
         'notes',
     ];
 
-    public function business(): BelongsTo
+    protected $appends = ['name', 'phone'];
+
+    public function businesses(): BelongsToMany
     {
-        return $this->belongsTo(Business::class);
+        return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
     public function user(): BelongsTo
@@ -36,5 +45,15 @@ class Contact extends Model
     public function getNameAttribute(): string
     {
         return trim("{$this->firstname} {$this->lastname}");
+    }
+
+    public function getPhoneAttribute(): ?string
+    {
+        return $this->mobile;
+    }
+
+    public function setPhoneAttribute(?string $value): void
+    {
+        $this->attributes['mobile'] = $value;
     }
 }

@@ -45,7 +45,7 @@ class AgendaController extends Controller
                     'start' => $apt->start_at->toIso8601String(),
                     'end' => $apt->end_at->toIso8601String(),
                     'color' => $apt->service->color ?? '#3B82F6',
-                    'status' => $apt->status->value,
+                    'status' => $apt->status_label,
                 ];
             });
 

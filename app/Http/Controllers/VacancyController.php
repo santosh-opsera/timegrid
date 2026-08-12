@@ -17,13 +17,13 @@ class VacancyController extends Controller
             ->with(['service', 'staff'])
             ->where('date', '>=', now()->toDateString())
             ->orderBy('date')
-            ->orderBy('start_time')
+            ->orderBy('start_at')
             ->get();
 
         return Inertia::render('Business/Vacancies/Index', [
             'business' => $business,
             'vacancies' => $vacancies,
-            'services' => $business->services()->where('is_active', true)->get(),
+            'services' => $business->services()->get(),
             'staff' => $business->staff()->get(),
         ]);
     }
@@ -34,14 +34,22 @@ class VacancyController extends Controller
 
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => 'nullable|exists:staff,id',
+            'staff_id' => 'nullable|exists:humanresources,id',
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'capacity' => 'integer|min:1|max:100',
         ]);
 
-        $business->vacancies()->create($validated);
+        $business->vacancies()->create([
+            'service_id' => $validated['service_id'],
+            'humanresource_id' => $validated['staff_id'] ?? null,
+            'date' => $validated['date'],
+            'start_at' => $validated['date'].' '.$validated['start_time'].':00',
+            'finish_at' => $validated['date'].' '.$validated['end_time'].':00',
+            'capacity' => $validated['capacity'] ?? 1,
+        ]);
+
         return back()->with('success', 'Vacancy created!');
     }
 
@@ -51,7 +59,7 @@ class VacancyController extends Controller
 
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
-            'staff_id' => 'nullable|exists:staff,id',
+            'staff_id' => 'nullable|exists:humanresources,id',
             'dates' => 'required|array|min:1',
             'dates.*' => 'date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
@@ -61,20 +69,21 @@ class VacancyController extends Controller
         foreach ($validated['dates'] as $date) {
             $business->vacancies()->create([
                 'service_id' => $validated['service_id'],
-                'staff_id' => $validated['staff_id'] ?? null,
+                'humanresource_id' => $validated['staff_id'] ?? null,
                 'date' => $date,
-                'start_time' => $validated['start_time'],
-                'end_time' => $validated['end_time'],
+                'start_at' => $date.' '.$validated['start_time'].':00',
+                'finish_at' => $date.' '.$validated['end_time'].':00',
             ]);
         }
 
-        return back()->with('success', count($validated['dates']) . ' vacancies created!');
+        return back()->with('success', count($validated['dates']).' vacancies created!');
     }
 
     public function destroy(Business $business, Vacancy $vacancy)
     {
         $this->authorize('manage', $business);
         $vacancy->delete();
+
         return back()->with('success', 'Vacancy removed.');
     }
 }

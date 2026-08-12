@@ -5,23 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Service extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'business_id',
         'name',
+        'slug',
         'description',
         'duration',
         'color',
-        'is_active',
     ];
 
-    protected function casts(): array
+    protected $appends = ['is_active'];
+
+    public function getIsActiveAttribute(): bool
     {
-        return [
-            'is_active' => 'boolean',
-        ];
+        return true;
     }
 
     public function business(): BelongsTo

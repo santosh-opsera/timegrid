@@ -12,25 +12,43 @@ class Appointment extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'issuer_id',
         'business_id',
         'service_id',
         'contact_id',
-        'staff_id',
+        'humanresource_id',
+        'vacancy_id',
         'status',
         'start_at',
-        'end_at',
+        'finish_at',
         'duration',
         'comments',
         'hash',
     ];
+
+    protected $appends = ['end_at', 'status_label'];
 
     protected function casts(): array
     {
         return [
             'status' => AppointmentStatus::class,
             'start_at' => 'datetime',
-            'end_at' => 'datetime',
+            'finish_at' => 'datetime',
         ];
+    }
+
+    public function getEndAtAttribute(): mixed
+    {
+        return $this->finish_at;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->status instanceof AppointmentStatus) {
+            return $this->status->label();
+        }
+
+        return (string) $this->status;
     }
 
     public function business(): BelongsTo
@@ -50,6 +68,6 @@ class Appointment extends Model
 
     public function staff(): BelongsTo
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(Staff::class, 'humanresource_id');
     }
 }

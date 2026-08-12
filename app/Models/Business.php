@@ -17,12 +17,14 @@ class Business extends Model
         'slug',
         'description',
         'category',
+        'category_id',
         'timezone',
         'strategy',
         'phone',
         'postal_address',
         'plan',
         'preferences',
+        'listed',
     ];
 
     protected function casts(): array
@@ -31,6 +33,7 @@ class Business extends Model
             'preferences' => 'array',
             'strategy' => BookingStrategy::class,
             'deleted_at' => 'datetime',
+            'listed' => 'boolean',
         ];
     }
 
@@ -41,7 +44,7 @@ class Business extends Model
 
     public function owners(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(User::class)->withTimestamps();
     }
 
     public function services(): HasMany
@@ -54,9 +57,9 @@ class Business extends Model
         return $this->hasMany(Staff::class);
     }
 
-    public function contacts(): HasMany
+    public function contacts(): BelongsToMany
     {
-        return $this->hasMany(Contact::class);
+        return $this->belongsToMany(Contact::class)->withTimestamps();
     }
 
     public function vacancies(): HasMany

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+#[Fillable(['name', 'email', 'username', 'password', 'role', 'phone'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -24,23 +24,35 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => UserRole::class,
         ];
     }
 
     public function businesses(): BelongsToMany
     {
-        return $this->belongsToMany(Business::class)->withPivot('role')->withTimestamps();
+        return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
     public function ownedBusinesses(): BelongsToMany
     {
-        return $this->businesses()->wherePivot('role', 'owner');
+        return $this->businesses();
     }
 
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class);
+    }
+
+    public function getRoleAttribute(mixed $value): UserRole
+    {
+        if (is_string($value) && $value !== '') {
+            return UserRole::tryFrom($value) ?? UserRole::Customer;
+        }
+
+        if ($this->relationLoaded('businesses')) {
+            return $this->businesses->isNotEmpty() ? UserRole::Owner : UserRole::Customer;
+        }
+
+        return $this->businesses()->exists() ? UserRole::Owner : UserRole::Customer;
     }
 
     public function isRoot(): bool
@@ -52,7 +64,6 @@ class User extends Authenticatable
     {
         return $this->businesses()
             ->where('businesses.id', $business->id)
-            ->wherePivot('role', 'owner')
             ->exists();
     }
 }
