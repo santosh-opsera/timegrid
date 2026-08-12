@@ -295,7 +295,7 @@ class Appointment extends Model
     {
         $date = $date->copy()->timezone('UTC');
 
-        return $query->whereRaw('date(`start_at`) = ?', [$date->toDateString()]);
+        return $query->whereDate('start_at', $date->toDateString());
     }
 
     /**
