@@ -2,7 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Permission;
+use App\Models\Preference;
+use App\Models\Role;
+use App\Models\User;
+use App\Observers\AuditObserver;
 use Illuminate\Support\ServiceProvider;
+use Timegridio\Concierge\Models\Appointment;
+use Timegridio\Concierge\Models\Business;
+use Timegridio\Concierge\Models\Contact;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +45,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $observer = AuditObserver::class;
+
+        User::observe($observer);
+        Role::observe($observer);
+        Permission::observe($observer);
+        Preference::observe($observer);
+        Business::observe($observer);
+        Contact::observe($observer);
+        Appointment::observe($observer);
     }
 }

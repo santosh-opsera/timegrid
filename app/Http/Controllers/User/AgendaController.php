@@ -146,7 +146,15 @@ class AgendaController extends Controller
         $reservation = compact('issuer', 'contact', 'service', 'date', 'time', 'timezone', 'comments');
         $reservation['issuer'] = $issuerId;
 
-        logger()->info('Reservation:'.print_r($reservation, true));
+        logger()->info('Reservation submitted', [
+            'business_id' => $business->id,
+            'contact_id' => $contact?->id,
+            'service_id' => $service->id,
+            'user_id' => $issuerId,
+            'date' => $date,
+            'time' => $time,
+            'timezone' => $timezone,
+        ]);
 
         try {
             $appointment = $this->concierge->business($business)->takeReservation($reservation);

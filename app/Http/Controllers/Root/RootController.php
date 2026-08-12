@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Root;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\TrackImpersonation;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -27,7 +28,10 @@ class RootController extends Controller
     public function getSudo(int|string $userId): RedirectResponse
     {
         logger()->info(__METHOD__);
-        logger()->warning("[!] ROOT SUDO userId:{$userId}");
+        logger()->warning('[!] ROOT SUDO initiated', ['user_id' => (int) $userId]);
+
+        $impersonator = auth()->user();
+        TrackImpersonation::begin($impersonator, (int) $userId);
 
         auth()->loginUsingId((int) $userId);
 
