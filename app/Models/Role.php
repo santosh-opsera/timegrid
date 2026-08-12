@@ -2,32 +2,61 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * @property Illuminate\Support\Collection $permissions
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Collection<int, Permission> $permissions
+ * @property Collection<int, User> $users
  */
-class Role extends EloquentModel
+class Role extends Model
 {
     /**
-     * A role may be given various permissions.
+     * The attributes that are mass assignable.
      *
-     * @return Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @var list<string>
      */
-    public function permissions()
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+    ];
+
+    /**
+     * Permissions granted to this role.
+     *
+     * @return BelongsToMany<Permission, $this>
+     */
+    public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class);
     }
 
     /**
-     * Grant the given permission to a role.
+     * Users assigned to this role.
      *
-     * @param App\Models\Permission $permission
-     *
-     * @return mixed
+     * @return BelongsToMany<User, $this>
      */
-    public function givePermissionTo(Permission $permission)
+    public function users(): BelongsToMany
     {
-        return $this->permissions()->save($permission);
+        return $this->belongsToMany(User::class);
+    }
+
+    /**
+     * Grant the given permission to this role.
+     */
+    public function givePermissionTo(Permission $permission): Permission
+    {
+        $this->permissions()->syncWithoutDetaching([$permission->getKey()]);
+
+        return $permission;
     }
 }

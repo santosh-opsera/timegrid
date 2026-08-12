@@ -3,20 +3,32 @@
 namespace App\Traits;
 
 use App\Models\Preference;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 trait Preferenceable
 {
-    public function preferences()
+    /**
+     * Preferences owned by the model.
+     *
+     * @return MorphMany<Preference, $this>
+     */
+    public function preferences(): MorphMany
     {
-        return $this->morphMany('App\Models\Preference', 'preferenceable');
+        return $this->morphMany(Preference::class, 'preferenceable');
     }
 
-    public function pref($key, $value = null, $type = 'string')
+    /**
+     * Get or set a preference value for the model.
+     */
+    public function pref(string $key, mixed $value = null, string $type = Preference::TYPE_STRING): mixed
     {
-        if (isset($value)) {
-            $value = $this->cast($value, $type);
+        if ($value !== null) {
+            $value = $this->castPreferenceValue($value, $type);
 
-            $this->preferences()->updateOrCreate(compact('key'), compact('value', 'type'));
+            $this->preferences()->updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'type' => $type],
+            );
 
             return $value;
         }
@@ -27,31 +39,20 @@ trait Preferenceable
             return $pref->value();
         }
 
-        $default = Preference::getDefault($this, $key);
-
-        return  $default->value();
+        return Preference::getDefault($this, $key)->value();
     }
 
-    private function cast($value, $type)
+    /**
+     * Cast a preference value to its declared storage type.
+     */
+    private function castPreferenceValue(mixed $value, string $type): mixed
     {
-        switch ($type) {
-            case 'bool':
-                $value = boolval($value);
-                break;
-            case 'int':
-                $value = intval($value);
-                break;
-            case 'float':
-                $value = floatval($value);
-                break;
-            case 'string':
-                $value = (string) $value;
-                break;
-            default:
-                // No changes
-                break;
-        }
-
-        return $value;
+        return match ($type) {
+            Preference::TYPE_BOOL => (bool) $value,
+            Preference::TYPE_INT => (int) $value,
+            Preference::TYPE_FLOAT => (float) $value,
+            Preference::TYPE_STRING => (string) $value,
+            default => $value,
+        };
     }
 }

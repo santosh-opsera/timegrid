@@ -2,7 +2,20 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Event;
+use App\Events\AppointmentWasCanceled;
+use App\Events\AppointmentWasConfirmed;
+use App\Events\NewAppointmentWasBooked;
+use App\Events\NewContactWasRegistered;
+use App\Events\NewSoftAppointmentWasBooked;
+use App\Events\NewUserWasRegistered;
+use App\Listeners\AutoConfigureUserPreferences;
+use App\Listeners\LinkContactToExistingUser;
+use App\Listeners\SendAppointmentCancellationNotification;
+use App\Listeners\SendAppointmentConfirmationNotification;
+use App\Listeners\SendBookingNotification;
+use App\Listeners\SendMailUserWelcome;
+use App\Listeners\SendSoftAppointmentValidationRequest;
+use App\Listeners\UserEventListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -10,48 +23,52 @@ class EventServiceProvider extends ServiceProvider
     /**
      * The event listener mappings for the application.
      *
-     * @var array
+     * @var array<class-string, list<class-string>>
      */
     protected $listen = [
-        \App\Events\NewUserWasRegistered::class => [
-            \App\Listeners\AutoConfigureUserPreferences::class,
-            \App\Listeners\SendMailUserWelcome::class,
+        NewUserWasRegistered::class => [
+            AutoConfigureUserPreferences::class,
+            SendMailUserWelcome::class,
         ],
-        \App\Events\NewAppointmentWasBooked::class => [
-            \App\Listeners\SendBookingNotification::class,
+        NewAppointmentWasBooked::class => [
+            SendBookingNotification::class,
         ],
-        \App\Events\NewContactWasRegistered::class => [
-            \App\Listeners\LinkContactToExistingUser::class,
+        NewContactWasRegistered::class => [
+            LinkContactToExistingUser::class,
         ],
-        \App\Events\AppointmentWasConfirmed::class => [
-            \App\Listeners\SendAppointmentConfirmationNotification::class,
+        AppointmentWasConfirmed::class => [
+            SendAppointmentConfirmationNotification::class,
         ],
-        \App\Events\AppointmentWasCanceled::class => [
-            \App\Listeners\SendAppointmentCancellationNotification::class,
+        AppointmentWasCanceled::class => [
+            SendAppointmentCancellationNotification::class,
         ],
-        \App\Events\NewSoftAppointmentWasBooked::class => [
-            \App\Listeners\SendSoftAppointmentValidationRequest::class,
+        NewSoftAppointmentWasBooked::class => [
+            SendSoftAppointmentValidationRequest::class,
         ],
     ];
 
     /**
      * The subscriber classes to register.
      *
-     * @var array
+     * @var list<class-string>
      */
     protected $subscribe = [
-        \App\Listeners\UserEventListener::class,
+        UserEventListener::class,
     ];
 
     /**
      * Register any events for your application.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
-        parent::boot();
-
         //
+    }
+
+    /**
+     * Determine if events and listeners should be automatically discovered.
+     */
+    public function shouldDiscoverEvents(): bool
+    {
+        return true;
     }
 }

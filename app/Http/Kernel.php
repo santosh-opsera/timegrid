@@ -2,8 +2,11 @@
 
 namespace App\Http;
 
+use App\Bootstrap\ConfigureLogging;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Routing\Router;
 
 class Kernel extends HttpKernel
@@ -11,19 +14,18 @@ class Kernel extends HttpKernel
     /**
      * The application's global HTTP middleware stack.
      *
-     * These middleware are run during every request to your application.
-     *
-     * @var array
+     * @var list<class-string>
      */
     protected $middleware = [
-        \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+        PreventRequestsDuringMaintenance::class,
+        ValidatePostSize::class,
         \App\Http\Middleware\Language::class,
     ];
 
     /**
      * The application's route middleware groups.
      *
-     * @var array
+     * @var array<string, list<class-string|string>>
      */
     protected $middlewareGroups = [
         'web' => [
@@ -37,43 +39,33 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:60,1',
-            'bindings',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
 
     /**
-     * The application's route middleware.
+     * The application's middleware aliases.
      *
-     * These middleware may be assigned to groups or used individually.
-     *
-     * @var array
+     * @var array<string, class-string>
      */
-    protected $routeMiddleware = [
-        'auth'       => \Illuminate\Auth\Middleware\Authenticate::class,
+    protected $middlewareAliases = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'bindings'   => \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        'can'        => \Illuminate\Auth\Middleware\Authorize::class,
-        'guest'      => \App\Http\Middleware\RedirectIfAuthenticated::class,
-        'throttle'   => \Illuminate\Routing\Middleware\ThrottleRequests::class,
-        'role'       => \App\Http\Middleware\RoleMiddleware::class,
+        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'can' => \Illuminate\Auth\Middleware\Authorize::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'role' => \App\Http\Middleware\RoleMiddleware::class,
     ];
 
-    /**
-     * We need to replace the ConfigureLogging bootstrappers to use the custom
-     * one. We’ll do this by overriding their respective constructors and
-     * doing an array_walk to the bootstrappers property.
-     *
-     * @param Application $app
-     * @param Router      $router
-     */
     public function __construct(Application $app, Router $router)
     {
         parent::__construct($app, $router);
 
-        array_walk($this->bootstrappers, function (&$bootstrapper) {
+        array_walk($this->bootstrappers, function (&$bootstrapper): void {
             if ($bootstrapper === \Illuminate\Foundation\Bootstrap\ConfigureLogging::class) {
-                $bootstrapper = \App\Bootstrap\ConfigureLogging::class;
+                $bootstrapper = ConfigureLogging::class;
             }
         });
     }

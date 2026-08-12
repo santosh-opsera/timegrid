@@ -3,84 +3,56 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Jenssegers\Agent\Agent;
+use Symfony\Component\HttpFoundation\Response;
 
 class Language
 {
-    /**
-     * Agent information gather class.
-     *
-     * @var Jenssegers\Agent\Facades\Agent
-     */
-    private $agent;
+    public function __construct(
+        private readonly Agent $agent,
+    ) {}
 
     /**
-     * Create the class.
-     *
-     * @param Agent $agent
+     * Handle an incoming request.
      */
-    public function __construct(Agent $agent)
+    public function handle(Request $request, Closure $next): Response
     {
-        $this->agent = $agent;
-    }
+        $sessionAppLocale = session()->get('applocale');
 
-    public function handle($request, Closure $next)
-    {
-        // logger()->debug(__METHOD__);
-
-        $sessionAppLocale = session()->get('applocale', null);
-
-        if ($sessionAppLocale == null) {
+        if ($sessionAppLocale === null) {
             $sessionAppLocale = $this->getAgentLangOrFallback(config('app.fallback_locale'));
         }
 
-        // logger()->debug("sessionAppLocale:$sessionAppLocale");
-
         if (isAcceptedLocale($sessionAppLocale)) {
             setGlobalLocale($sessionAppLocale);
-            // logger()->debug('setGlobalLocale set');
         }
 
         return $next($request);
     }
 
-    /////////////
-    // Helpers //
-    /////////////
-
     /**
-     * Get accepted Lang from Agent Or Fallback to default locale.
-     *
-     * @return string
+     * Resolve the preferred locale from the user agent or fall back.
      */
-    protected function getAgentLangOrFallback($fallbackLocale)
+    protected function getAgentLangOrFallback(string $fallbackLocale): string
     {
         $agentLanguages = $this->agent->languages();
-        $configLanguages = config('languages');
-
-        // logger()->debug('Agent Languages: '.serialize($agentLanguages));
-        // logger()->debug('Config Languages: '.serialize($configLanguages));
+        $configLanguages = config('languages', []);
 
         if ($agentPreferredLocale = $this->searchAgent($agentLanguages, $configLanguages)) {
-            // logger()->debug("Agent Preferred Locale: $agentPreferredLocale");
-
             return $agentPreferredLocale;
         }
-
-        // logger()->debug("Using Fallback: $fallbackLocale");
 
         return $fallbackLocale;
     }
 
     /**
-     * Search all AgentLangs aming app available Langs.
+     * Search agent languages against configured application locales.
      *
-     * @param array $agentPreferredLocale
-     * @param array $appAcceptedLocales
-     *
-     * @return string
+     * @param  list<string>  $agentPreferredLocale
+     * @param  array<string, string>  $appAcceptedLocales
      */
-    protected function searchAgent($agentPreferredLocale, $appAcceptedLocales)
+    protected function searchAgent(array $agentPreferredLocale, array $appAcceptedLocales): ?string
     {
         $availableLangs = $this->normalizeArrayKeys($appAcceptedLocales);
         $agentPreferredLocale = $this->normalizeArrayValues($agentPreferredLocale);
@@ -90,24 +62,16 @@ class Language
                 return $matchedLocale;
             }
         }
+
+        return null;
     }
 
     /**
-     * Search for an AgentLang among app available Langs.
+     * Match an agent language token against available locales.
      *
-     * EXAMPLE MATCH
-     * "en_us" "en_us" : true
-     * "en"    "en_us" : true
-     * "es"    "es_es" : true
-     * "en_us" "es_es" : false
-     * "es_ar" "es_es" : false
-     *
-     * @param array  $availableLangs
-     * @param string $agentLang
-     *
-     * @return string|false
+     * @param  array<string, string>  $availableLangs
      */
-    protected function compareAgentLang(array $availableLangs, $agentLang)
+    protected function compareAgentLang(array $availableLangs, string $agentLang): string|false
     {
         foreach ($availableLangs as $availableKey => $availableLang) {
             if (stripos($availableLang, $agentLang) !== false) {
@@ -119,45 +83,30 @@ class Language
     }
 
     /**
-     * Copy keys as lowercase values.
+     * Copy locale keys as lowercase values.
      *
-     * EXAMPLE CONVERSION
-     * array:2 [                   >> array:2 [
-     *   "en_US" => "English" >>   "en_US" => "en_us"
-     *   "es_ES" => "Español" >>   "es_ES" => "es_es"
-     * ]                           >> ]
-     *
-     * @param array $array
-     *
-     * @return array
+     * @param  array<string, string>  $array
+     * @return array<string, string>
      */
-    protected function normalizeArrayKeys(array $array)
+    protected function normalizeArrayKeys(array $array): array
     {
-        array_walk($array, function (&$value, $key) {
-            $value = strtolower($key);
+        array_walk($array, function (&$value, $key): void {
+            $value = strtolower((string) $key);
         });
 
         return $array;
     }
 
     /**
-     * Change values to lowercase and undescored instead of dashed.
+     * Normalize locale values to lowercase underscored strings.
      *
-     * EXAMPLE CONVERSION
-     * array:3 [      >> array:3 [
-     *   0 => "es"    >>   0 => "es"
-     *   1 => "en-us" >>   1 => "en_us"
-     *   2 => "en"    >>   2 => "en"
-     * ]              >> ]
-     *
-     * @param array $array
-     *
-     * @return array
+     * @param  list<string>  $array
+     * @return list<string>
      */
-    protected function normalizeArrayValues(array $array)
+    protected function normalizeArrayValues(array $array): array
     {
-        array_walk($array, function (&$value) {
-            $value = str_replace('-', '_', strtolower($value));
+        array_walk($array, function (&$value): void {
+            $value = str_replace('-', '_', strtolower((string) $value));
         });
 
         return $array;

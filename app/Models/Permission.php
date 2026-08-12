@@ -2,20 +2,53 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * @property Illuminate\Support\Collection $roles
+ * @property int $id
+ * @property int|null $inherit_id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Collection<int, Role> $roles
+ * @property Permission|null $inherit
  */
-class Permission extends EloquentModel
+class Permission extends Model
 {
     /**
-     * A permission can be applied to roles.
+     * The attributes that are mass assignable.
      *
-     * @return Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @var list<string>
      */
-    public function roles()
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+    ];
+
+    /**
+     * Roles that include this permission.
+     *
+     * @return BelongsToMany<Role, $this>
+     */
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * Parent permission from which this permission inherits.
+     *
+     * @return BelongsTo<Permission, $this>
+     */
+    public function inherit(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'inherit_id');
     }
 }

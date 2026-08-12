@@ -2,48 +2,50 @@
 
 namespace App\Traits;
 
-use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection as SupportCollection;
 
 trait HasRoles
 {
     /**
-     * A user may have multiple roles.
+     * Roles assigned to the model.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany<Role, $this>
      */
-    public function roles()
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
     }
 
     /**
-     * Assign the given role to the user.
-     *
-     * @param string $role
-     *
-     * @return mixed
+     * Assign the given role to the model.
      */
-    public function assignRole($role)
+    public function assignRole(string $role): Role
     {
-        return $this->roles()->save(
-            Role::whereName($role)->firstOrFail()
-        );
+        $roleModel = Role::query()->where('name', $role)->firstOrFail();
+
+        $this->roles()->syncWithoutDetaching([$roleModel->getKey()]);
+
+        return $roleModel;
     }
 
     /**
-     * Determine if the user has the given role.
+     * Determine if the model has the given role.
      *
-     * @param mixed $role
-     *
-     * @return bool
+     * @param  string|Role|SupportCollection<int, Role>|Collection<int, Role>  $role
      */
-    public function hasRole($role)
+    public function hasRole(string|Role|SupportCollection|Collection $role): bool
     {
         if (is_string($role)) {
             return $this->roles->contains('name', $role);
         }
 
-        return (bool) $role->intersect($this->roles)->count();
+        if ($role instanceof Role) {
+            return $this->roles->contains($role);
+        }
+
+        return $role->intersect($this->roles)->isNotEmpty();
     }
 }

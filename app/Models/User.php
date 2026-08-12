@@ -4,15 +4,18 @@ namespace App\Models;
 
 use App\Traits\HasRoles;
 use App\Traits\Preferenceable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Auth\Authenticatable;
-use Illuminate\Auth\Passwords\CanResetPassword;
-use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
-use Illuminate\Database\Eloquent\Model as EloquentModel;
-use Illuminate\Foundation\Auth\Access\Authorizable;
+use Timegridio\Concierge\Models\Appointment;
 use Timegridio\Concierge\Models\Business;
+use Timegridio\Concierge\Models\Contact;
 
 /**
  * @property int $id
@@ -20,153 +23,144 @@ use Timegridio\Concierge\Models\Business;
  * @property string $email
  * @property string $username
  * @property string $password
- * @property string $last_ip
- * @property Carbon\Carbon $last_login_at
- * @property Illuminate\Support\Collection $businesses
- * @property Illuminate\Support\Collection $contacts
- * @property Illuminate\Support\Collection $appointments
+ * @property string|null $last_ip
+ * @property Carbon|null $last_login_at
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Collection<int, Business> $businesses
+ * @property Collection<int, Contact> $contacts
+ * @property Collection<int, Appointment> $appointments
+ * @property Collection<int, Role> $roles
  */
-class User extends EloquentModel implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
+class User extends Authenticatable
 {
-    use Authenticatable, Authorizable, CanResetPassword, HasRoles, Notifiable, Preferenceable;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, HasRoles, Notifiable, Preferenceable;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var list<string>
      */
-    protected $fillable = ['name', 'email', 'username', 'password'];
+    protected $fillable = [
+        'name',
+        'email',
+        'username',
+        'last_ip',
+        'last_login_at',
+        'email_verified_at',
+    ];
 
     /**
-     * The attributes excluded from the model's JSON form.
+     * The attributes that should be hidden for serialization.
      *
-     * @var array
+     * @var list<string>
      */
-    protected $hidden = ['password', 'remember_token', 'last_ip', 'last_login_at'];
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'last_ip',
+        'last_login_at',
+    ];
 
     /**
-     * The attributes that should be mutated to dates.
+     * Get the attributes that should be cast.
      *
-     * @var array
+     * @return array<string, string>
      */
-    protected $dates = ['last_login_at'];
-
-    ///////////////////
-    // Relationships //
-    ///////////////////
-
-    /**
-     * owns Business.
-     *
-     * @return Illuminate\Database\Query Relationship Business belongs to User query
-     */
-    public function businesses()
+    protected function casts(): array
     {
-        return $this->belongsToMany(\Timegridio\Concierge\Models\Business::class)->withTimestamps();
+        return [
+            'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 
     /**
-     * has Contacts.
+     * Businesses owned by this user.
      *
-     *      Contacts are the different profiles for different Businesses the User may have
-     *
-     * @return Illuminate\Database\Query Relationship User has Contacts query
+     * @return BelongsToMany<Business, $this>
      */
-    public function contacts()
+    public function businesses(): BelongsToMany
     {
-        return $this->hasMany(\Timegridio\Concierge\Models\Contact::class);
+        return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
     /**
-     * holds Appointments through Contacts.
+     * Contact profiles for different businesses.
      *
-     * The Appointments are the Contact reservations held by this User
-     *
-     * @return Illuminate\Database\Query Relationship User has Appointments through Contacts query
+     * @return HasMany<Contact, $this>
      */
-    public function appointments()
+    public function contacts(): HasMany
     {
-        return $this->hasManyThrough(
-            \Timegridio\Concierge\Models\Appointment::class,
-            \Timegridio\Concierge\Models\Contact::class
-        );
+        return $this->hasMany(Contact::class);
     }
 
-    /////////////////////
-    // Soft Attributes //
-    /////////////////////
+    /**
+     * Appointments held through contact profiles.
+     *
+     * @return HasManyThrough<Appointment, Contact, $this>
+     */
+    public function appointments(): HasManyThrough
+    {
+        return $this->hasManyThrough(Appointment::class, Contact::class);
+    }
 
     /**
-     * TODO: Rename to isOwnerOf().
-     *
-     * is Owner of Business
-     *
-     * @param int $businessId Business to inquiry against
-     *
-     * @return bool The User is Owner of the inquired Business
+     * Determine whether the user owns the given business.
      */
-    public function isOwnerOf($businessId)
+    public function isOwnerOf(int $businessId): bool
     {
         return $this->businesses()->withTrashed()->get()->contains($businessId);
     }
 
     /**
-     * has Business.
-     *
-     * @return bool The User is Owner of at least one Business
+     * Determine whether the user owns at least one business.
      */
-    public function hasBusiness()
+    public function hasBusiness(): bool
     {
         return $this->businesses->count() > 0;
     }
 
     /**
-     * has Contacts.
-     *
-     * @return bool The User has at least one Contact profile set
+     * Determine whether the user has at least one contact profile.
      */
-    public function hasContacts()
+    public function hasContacts(): bool
     {
         return $this->contacts->count() > 0;
     }
 
-    //////////////
-    // Mutators //
-    //////////////
-
     /**
-     * set Username.
-     *
-     * @param string $username The desired username
+     * Get the contact subscribed to the given business.
      */
-    public function setUsernameAttribute($username)
+    public function getContactSubscribedTo(int $businessId): ?Contact
     {
-        $username = strtolower(trim($username));
-
-        return $this->attributes['username'] = $username == '' ? md5(time().uniqid()) : $username;
-    }
-
-    /**
-     * set Name.
-     *
-     * @param string $string The first name of the User
-     */
-    public function setNameAttribute($name)
-    {
-        return $this->attributes['name'] = ucwords(strtolower($name));
-    }
-
-    /**
-     * Get Subscribed Contact to Business.
-     *
-     * @param Business $business Business of inquiry
-     *
-     * @return Contact User profile Contact subscribed to the inquired Business
-     */
-    public function getContactSubscribedTo($businessId)
-    {
-        return $this->contacts->filter(function ($contact) use ($businessId) {
+        return $this->contacts->filter(function (Contact $contact) use ($businessId) {
             return $contact->isSubscribedTo($businessId);
         })->first();
+    }
+
+    /**
+     * Normalize the username before persistence.
+     */
+    protected function username(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $username) => ($username = strtolower(trim((string) $username))) === ''
+                ? md5(time().uniqid())
+                : $username,
+        );
+    }
+
+    /**
+     * Normalize the display name before persistence.
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $name) => ucwords(strtolower($name)),
+        );
     }
 }

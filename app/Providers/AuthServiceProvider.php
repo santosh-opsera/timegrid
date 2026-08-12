@@ -2,30 +2,29 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Gate;
+use App\Policies\BusinessPolicy;
+use App\Policies\ContactPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Timegridio\Concierge\Models\Business;
+use Timegridio\Concierge\Models\Contact;
 
 class AuthServiceProvider extends ServiceProvider
 {
     /**
      * The policy mappings for the application.
      *
-     * @var array
+     * @var array<class-string, class-string>
      */
     protected $policies = [
-        \Timegridio\Concierge\Models\Business::class => \App\Policies\BusinessPolicy::class,
-        \Timegridio\Concierge\Models\Contact::class  => \App\Policies\ContactPolicy::class,
+        Business::class => BusinessPolicy::class,
+        Contact::class => ContactPolicy::class,
     ];
 
     /**
      * Register any authentication / authorization services.
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $this->registerPolicies();
-
-        //
     }
 }

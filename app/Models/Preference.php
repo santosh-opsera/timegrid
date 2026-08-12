@@ -2,113 +2,140 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
+ * @property int $id
  * @property string $key
- * @property mixed $value
+ * @property string $value
  * @property string $type
+ * @property string $preferenceable_type
+ * @property int $preferenceable_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Model $preferenceable
  */
-class Preference extends EloquentModel
+class Preference extends Model
 {
+    public const TYPE_STRING = 'string';
 
-    protected $fillable = ['key', 'value', 'type'];
+    public const TYPE_BOOL = 'bool';
 
-    public function preferenceable()
+    public const TYPE_INT = 'int';
+
+    public const TYPE_FLOAT = 'float';
+
+    public const TYPE_ARRAY = 'array';
+
+    public const TYPE_TIME = 'time';
+
+    public const TYPE_JSON = 'json';
+
+    /**
+     * Supported preference value types.
+     *
+     * @var list<string>
+     */
+    public const TYPES = [
+        self::TYPE_STRING,
+        self::TYPE_BOOL,
+        self::TYPE_INT,
+        self::TYPE_FLOAT,
+        self::TYPE_ARRAY,
+        self::TYPE_TIME,
+        self::TYPE_JSON,
+    ];
+
+    /**
+     * Supported polymorphic owner types.
+     *
+     * @var list<class-string<Model>>
+     */
+    public const PREFERENCEABLE_TYPES = [
+        User::class,
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'key',
+        'value',
+        'type',
+        'preferenceable_type',
+        'preferenceable_id',
+    ];
+
+    /**
+     * Owning model for this preference.
+     *
+     * @return MorphTo<Model, $this>
+     */
+    public function preferenceable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    /**
-     * [__toString description].
-     *
-     * @return string $value
-     */
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->attributes['value'];
+        return (string) $this->attributes['value'];
     }
 
     /**
-     * Get default value.
-     *
-     * @param string $model
-     * @param string $key
-     *
-     * @return mixed
+     * Build a preference instance using configured defaults.
      */
-    public static function getDefault($model, $key)
+    public static function getDefault(Model $model, string $key): self
     {
-        $class = get_class($model);
+        $class = $model::class;
         $value = config("preferences.{$class}.{$key}.value");
-        $type = config("preferences.{$class}.{$key}.type");
+        $type = config("preferences.{$class}.{$key}.type", self::TYPE_STRING);
 
         return new self([
-            'key'                 => $key,
-            'value'               => $value,
-            'type'                => $type,
+            'key' => $key,
+            'value' => $value,
+            'type' => $type,
             'preferenceable_type' => $class,
-            'preferenceable_id'   => $model,
-            ]);
+            'preferenceable_id' => $model->getKey(),
+        ]);
     }
 
-    /**
-     * [question description].
-     *
-     * @return string
-     */
-    public function question()
+    public function question(): string
     {
-        return trans("preferences.{$this->preferenceable_type}.question.{$this->key}");
+        return (string) trans("preferences.{$this->preferenceable_type}.question.{$this->key}");
     }
 
-    /**
-     * [help description].
-     *
-     * @return string
-     */
-    public function help()
+    public function help(): string
     {
-        return trans("preferences.{$this->preferenceable_type}.help.{$this->key}");
+        return (string) trans("preferences.{$this->preferenceable_type}.help.{$this->key}");
     }
 
     /**
-     * [scopeForKey description].
+     * Scope preferences to a specific key.
      *
-     * @param [type] $query [description]
-     * @param [type] $key   [description]
-     *
-     * @return [type] [description]
+     * @param  Builder<Preference>  $query
+     * @return Builder<Preference>
      */
-    public function scopeForKey($query, $key)
+    public function scopeForKey(Builder $query, string $key): Builder
     {
         return $query->where('key', $key);
     }
 
     /**
-     * Get casted value.
-     *
-     * @return mixed
+     * Return the stored value cast to its declared type.
      */
-    public function value()
+    public function value(): mixed
     {
-        switch ($this->type) {
-            case 'string':
-                return (string) $this->value;
-                break;
-            case 'bool':
-                return (bool) $this->value;
-                break;
-            case 'int':
-                return (int) $this->value;
-                break;
-            case 'float':
-                return (float) $this->value;
-                break;
-            default:
-                break;
-        }
-
-        return $this->value;
+        return match ($this->type) {
+            self::TYPE_STRING => (string) $this->value,
+            self::TYPE_BOOL => (bool) $this->value,
+            self::TYPE_INT => (int) $this->value,
+            self::TYPE_FLOAT => (float) $this->value,
+            default => $this->value,
+        };
     }
 }

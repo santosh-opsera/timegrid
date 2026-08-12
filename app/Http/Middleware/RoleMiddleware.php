@@ -4,21 +4,21 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
     /**
-     * Run the request filter.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure                 $next
-     * @param string                   $role
-     *
-     * @return mixed
+     * Handle an incoming request.
      */
-    public function handle($request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (!$request->user()->hasRole($role)) {
+        if (! auth()->check()) {
+            return new RedirectResponse(url('/login'));
+        }
+
+        if (! $request->user()->hasRole($role)) {
             return new RedirectResponse(url('/'));
         }
 
