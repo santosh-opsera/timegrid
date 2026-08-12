@@ -5,6 +5,9 @@ cd /var/www/html
 
 echo "==> Generating application key if missing..."
 if [ -z "$APP_KEY" ]; then
+    if [ ! -f .env ]; then
+        touch .env
+    fi
     php artisan key:generate --force --no-interaction
 fi
 
