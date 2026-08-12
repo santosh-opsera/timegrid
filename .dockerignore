@@ -18,10 +18,10 @@ docs
 *.md
 !readme.md
 docker-compose*.yml
-Dockerfile
 .editorconfig
 .eslintrc
 .codeclimate.yml
 .phpunit.result.cache
 npm-debug.log
 .DS_Store
+render.yaml

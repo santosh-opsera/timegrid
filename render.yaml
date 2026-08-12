@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: timegrid
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    branch: forge
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: Timegrid
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        fromService:
+          type: web
+          name: timegrid
+          property: url
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_LOCALE
+        value: en_US
+      - key: APP_FALLBACK_LOCALE
+        value: en_US
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: timegrid-db
+          property: connectionString
+      - key: DB_URL
+        fromDatabase:
+          name: timegrid-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: file
+      - key: SESSION_LIFETIME
+        value: "120"
+      - key: LOG_CHANNEL
+        value: errorlog
+      - key: LOG_LEVEL
+        value: warning
+      - key: CACHE_STORE
+        value: array
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: MAIL_MAILER
+        value: log
+      - key: BROADCAST_CONNECTION
+        value: log
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: PORT
+        value: "10000"
+      - key: PHP_CLI_SERVER_WORKERS
+        value: "4"
+
+databases:
+  - name: timegrid-db
+    databaseName: timegrid
+    plan: free
