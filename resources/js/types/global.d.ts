@@ -10,6 +10,7 @@ import {
 
 export interface Auth {
     user: User | null;
+    managedBusinesses?: Array<{ id: number; name: string; slug: string }>;
 }
 
 export interface Flash {

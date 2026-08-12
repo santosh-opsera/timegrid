@@ -4,8 +4,14 @@ import {
     BuildingStorefrontIcon,
     CalendarDaysIcon,
     ChevronDownIcon,
+    ClipboardDocumentListIcon,
+    ClockIcon,
+    Cog6ToothIcon,
     HomeIcon,
     UserCircleIcon,
+    UserGroupIcon,
+    UsersIcon,
+    WrenchScrewdriverIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { Link, usePage } from '@inertiajs/react';
@@ -33,6 +39,7 @@ export default function AuthenticatedLayout({
     const route = useRoute();
     const { auth, locale, notifications = [] } = usePage().props;
     const user = auth.user;
+    const managedBusinesses = auth.managedBusinesses ?? [];
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
@@ -41,12 +48,30 @@ export default function AuthenticatedLayout({
         document.documentElement.classList.toggle('dark', stored === 'dark' || (!stored && prefersDark));
     }, []);
 
-    const navigation = [
+    const customerNav = [
         { name: 'Dashboard', href: route('user.dashboard') as string, icon: HomeIcon, routeName: 'user.dashboard' },
         { name: 'My Appointments', href: route('user.agenda') as string, icon: CalendarDaysIcon, routeName: 'user.agenda' },
         { name: 'Directory', href: route('user.directory.list') as string, icon: BuildingStorefrontIcon, routeName: 'user.directory.list' },
         { name: 'Profile', href: route('user.profile') as string, icon: UserCircleIcon, routeName: 'user.profile' },
     ];
+
+    const activeBusiness = managedBusinesses[0];
+
+    const ownerNav = activeBusiness
+        ? [
+              { name: 'Dashboard', href: route('manager.business.show', { business: activeBusiness.slug }) as string, icon: HomeIcon, routeName: 'manager.business.show' },
+              { name: 'Calendar', href: route('manager.business.agenda.calendar', { business: activeBusiness.slug }) as string, icon: CalendarDaysIcon, routeName: 'manager.business.agenda.calendar' },
+              { name: 'Appointments', href: route('manager.business.agenda.index', { business: activeBusiness.slug }) as string, icon: ClipboardDocumentListIcon, routeName: 'manager.business.agenda.index' },
+              { name: 'Services', href: route('manager.business.service.index', { business: activeBusiness.slug }) as string, icon: WrenchScrewdriverIcon, routeName: 'manager.business.service.index' },
+              { name: 'Contacts', href: route('manager.addressbook.index', { business: activeBusiness.slug }) as string, icon: UsersIcon, routeName: 'manager.addressbook.index' },
+              { name: 'Staff', href: route('manager.business.humanresource.index', { business: activeBusiness.slug }) as string, icon: UserGroupIcon, routeName: 'manager.business.humanresource.index' },
+              { name: 'Availability', href: route('manager.business.vacancy.show', { business: activeBusiness.slug }) as string, icon: ClockIcon, routeName: 'manager.business.vacancy.show' },
+              { name: 'Preferences', href: route('manager.business.preferences', { business: activeBusiness.slug }) as string, icon: Cog6ToothIcon, routeName: 'manager.business.preferences' },
+          ]
+        : [];
+
+    const isOwner = managedBusinesses.length > 0;
+    const navigation = isOwner ? ownerNav : customerNav;
 
     const routeHelper = route() as { current: (name?: string) => boolean };
 
@@ -90,9 +115,26 @@ export default function AuthenticatedLayout({
                                     <XMarkIcon className="h-6 w-6" />
                                 </button>
                             </div>
-                            <nav className="flex-1 space-y-1 px-4 py-4" aria-label="Main navigation">
-                                {navigation.map((item) => (
-                                    <NavLink key={item.name} href={item.href} active={routeHelper.current(item.routeName)}>
+                            <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-4" aria-label="Main navigation">
+                                {isOwner && activeBusiness && (
+                                    <>
+                                        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                            {activeBusiness.name}
+                                        </p>
+                                        {ownerNav.map((item) => (
+                                            <NavLink key={item.name} href={item.href} active={routeHelper.current(item.routeName)}>
+                                                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                                                {item.name}
+                                            </NavLink>
+                                        ))}
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+                                        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                            Personal
+                                        </p>
+                                    </>
+                                )}
+                                {customerNav.map((item) => (
+                                    <NavLink key={item.name} href={item.href} active={!isOwner && routeHelper.current(item.routeName)}>
                                         <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                                         {item.name}
                                     </NavLink>
@@ -111,9 +153,26 @@ export default function AuthenticatedLayout({
                         <span className="text-lg font-bold text-slate-900 dark:text-white">Timegrid</span>
                     </Link>
                 </div>
-                <nav className="flex-1 space-y-1 px-4 py-6" aria-label="Main navigation">
-                    {navigation.map((item) => (
-                        <NavLink key={item.name} href={item.href} active={routeHelper.current(item.routeName)}>
+                <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-6" aria-label="Main navigation">
+                    {isOwner && activeBusiness && (
+                        <>
+                            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                {activeBusiness.name}
+                            </p>
+                            {ownerNav.map((item) => (
+                                <NavLink key={item.name} href={item.href} active={routeHelper.current(item.routeName)}>
+                                    <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                                    {item.name}
+                                </NavLink>
+                            ))}
+                            <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+                            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                Personal
+                            </p>
+                        </>
+                    )}
+                    {customerNav.map((item) => (
+                        <NavLink key={item.name} href={item.href} active={!isOwner && routeHelper.current(item.routeName)}>
                             <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                             {item.name}
                         </NavLink>
