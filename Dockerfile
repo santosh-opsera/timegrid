@@ -6,7 +6,7 @@ FROM node:20-slim AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --force
 
 COPY vite.config.js tsconfig.json ./
 COPY resources ./resources
