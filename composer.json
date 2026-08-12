@@ -2,7 +2,16 @@
     "name": "timegridio/timegrid",
     "description": "Free, open-source, self-hosted online appointment platform based on the Laravel PHP Framework.",
     "homepage": "http://www.timegrid.io",
-    "keywords": ["appointments", "reservations", "booking", "agenda", "marketplace", "time", "date", "calendar"],
+    "keywords": [
+        "appointments",
+        "reservations",
+        "booking",
+        "agenda",
+        "marketplace",
+        "time",
+        "date",
+        "calendar"
+    ],
     "license": "AGPL",
     "authors": [
         {
@@ -21,92 +30,91 @@
     },
     "type": "project",
     "require": {
-        "php": ">=5.6",
-        "anhskohbo/no-captcha": "2.*",
-        "barryvdh/laravel-snappy": "~0.2",
-        "bassjobsen/bootstrap-3-typeahead": "~4.0",
-        "creativeorange/gravatar": "~1.0",
-        "fenos/notifynder": "^3.0",
-        "graham-campbell/markdown": "^6.0",
-        "guzzlehttp/guzzle": "~6.0",
-        "intervention/image": "^2.2",
-        "intervention/imagecache": "^2.2",
-        "ipunkt/laravel-analytics": "~1.1",
-        "laracasts/flash": "~2.0",
-        "laravel/framework": "5.3.*",
-        "laravel/socialite": "~2.0",
-        "laravelcollective/html": "~5.2",
-        "mccool/laravel-auto-presenter": "^4.0",
-        "patricktalmadge/bootstrapper": "~5",
-        "pid/speakingurl": "^0.11.0",
-        "propaganistas/laravel-phone": "~2.0",
-        "sorich87/bootstrap-tour": "^0.10.2",
-        "stevebauman/location": "~2.0",
-        "twitter/typeahead.js": "^0.11.1",
-        "webpatser/laravel-countries": "dev-master",
-        "jenssegers/agent": "^2.3",
-        "laracasts/utilities": "^2.1",
-        "alariva/tidiochat": "^2.0",
-        "timegridio/concierge": "dev-master#90e65c",
-        "jenssegers/rollbar": "^1.5",
-        "eluceo/ical": "^0.11",
-        "snowfire/beautymail": "dev-master",
-        "timegridio/icalreader": "dev-master",
-        "spatie/laravel-cookie-consent": "^1.2",
-        "torann/geoip": "1.0.*",
-        "geoip2/geoip2": "~2.1",
-        "seanstewart/plan-config": "dev-master",
-        "nesbot/carbon": "^1.22",
-        "jackiedo/timezonelist": "^5.0"
+        "php": "^8.3",
+        "eluceo/ical": "^0.16",
+        "geoip2/geoip2": "^3.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "inertiajs/inertia-laravel": "^2.0",
+        "intervention/image": "^3.0",
+        "laravel/framework": "^12.0",
+        "laravel/sanctum": "^4.0",
+        "laravel/socialite": "^5.0",
+        "laravel/tinker": "^3.0",
+        "nesbot/carbon": "^3.0",
+        "propaganistas/laravel-phone": "^5.0",
+        "sentry/sentry-laravel": "^4.0",
+        "spatie/laravel-activitylog": "^4.0",
+        "timegridio/concierge": "@dev",
+        "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^2.0",
-        "caouecs/laravel-lang": "~3.0",
-        "codeclimate/php-test-reporter": "dev-master",
-        "fzaninotto/faker": "~1.0",
-        "laracasts/generators": "^1.1",
-        "phpunit/phpunit": "~5.0",
-        "phpunit/phpunit-selenium": "~3.0",
-        "potsky/laravel-localization-helpers" : "2.4.*",
-        "symfony/css-selector": "~3.0",
-        "symfony/dom-crawler": "~3.0",
-        "mockery/mockery": "0.9.*",
-        "tightenco/mailthief": "~0.3"
+        "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.0",
+        "laravel/breeze": "^2.0",
+        "laravel/pint": "^1.0",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.0",
+        "phpunit/phpunit": "^11.0"
     },
     "autoload": {
-        "classmap": [
-            "database"
-        ],
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Database\\": "database/"
         },
         "files": [
             "app/helpers.php"
         ]
     },
     "autoload-dev": {
-        "classmap": [
-            "tests/TestCase.php",
-            "tests/helpers/"
-        ]
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "scripts": {
-        "post-root-package-install": [
-            "php -r \"copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "php artisan key:generate"
-        ],
-        "post-install-cmd": [
-            "Illuminate\\Foundation\\ComposerScripts::postInstall",
-            "php artisan optimize"
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "Illuminate\\Foundation\\ComposerScripts::postUpdate",
-            "php artisan optimize"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
         ]
     },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
     "config": {
-        "preferred-install": "dist"
-    }
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/timegridio/concierge"
+        }
+    ]
 }
