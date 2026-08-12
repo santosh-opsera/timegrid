@@ -226,6 +226,7 @@ Route::prefix('{business}')
                 Route::controller(BusinessAgendaController::class)->group(function (): void {
                     Route::get('agenda', 'getIndex')->name('manager.business.agenda.index');
                     Route::get('calendar', 'getCalendar')->name('manager.business.agenda.calendar');
+                    Route::post('agenda/{appointment}/status', 'updateStatus')->name('manager.business.agenda.status');
                 });
 
                 Route::controller(ManagerBusinessController::class)->group(function (): void {

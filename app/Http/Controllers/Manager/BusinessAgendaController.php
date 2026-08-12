@@ -6,9 +6,12 @@ namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
 use App\TG\Business\Token as BusinessToken;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Timegridio\Concierge\Concierge;
+use Timegridio\Concierge\Models\Appointment;
 use Timegridio\Concierge\Models\Business;
 
 class BusinessAgendaController extends Controller
@@ -26,15 +29,55 @@ class BusinessAgendaController extends Controller
 
         $appointments = $this->concierge->business($business)->getUnarchivedAppointments();
 
-        $user = auth()->user();
+        $userId = (int) auth()->id();
+
+        $appointmentsWithActions = collect($appointments)->map(function ($appt) use ($userId) {
+            $data = $appt->toArray();
+            $data['can_confirm'] = $appt->isConfirmableBy($userId);
+            $data['can_cancel'] = $appt->isCancelableBy($userId);
+            $data['can_serve'] = $appt->isServeableBy($userId);
+
+            return $data;
+        })->values()->all();
 
         return Inertia::render('Business/Agenda/Index', [
             'business'     => $business,
-            'appointments' => $appointments,
-            'user'         => $user,
+            'appointments' => $appointmentsWithActions,
+            'user'         => auth()->user(),
             'strategy'     => $business->strategy,
             'isEmpty'      => count($appointments) === 0,
         ]);
+    }
+
+    public function updateStatus(Request $request, Business $business, Appointment $appointment): RedirectResponse
+    {
+        $this->authorize('manage', $business);
+
+        $request->validate([
+            'action' => ['required', 'in:confirm,cancel,serve'],
+        ]);
+
+        $userId = (int) auth()->id();
+        $action = $request->input('action');
+
+        $result = match ($action) {
+            'confirm' => $appointment->isConfirmableBy($userId) ? $appointment->doConfirm() : null,
+            'cancel'  => $appointment->isCancelableBy($userId) ? $appointment->doCancel() : null,
+            'serve'   => $appointment->isServeableBy($userId) ? $appointment->doServe() : null,
+            default   => null,
+        };
+
+        if ($result === null) {
+            session()->flash('error', 'You are not authorized to perform this action on the appointment.');
+
+            return redirect()->route('manager.business.agenda.index', ['business' => $business->slug]);
+        }
+
+        $labels = ['confirm' => 'confirmed', 'cancel' => 'cancelled', 'serve' => 'marked as served'];
+
+        session()->flash('success', "Appointment {$labels[$action]} successfully.");
+
+        return redirect()->route('manager.business.agenda.index', ['business' => $business->slug]);
     }
 
     public function getCalendar(Business $business): Response
