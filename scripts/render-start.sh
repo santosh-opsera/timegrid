@@ -12,10 +12,7 @@ if [ -z "$APP_KEY" ]; then
 fi
 
 echo "==> Running database migrations..."
-php artisan migrate --force --no-interaction
-
-echo "==> Seeding database (if empty)..."
-php artisan db:seed --force --no-interaction 2>/dev/null || echo "Seeding skipped or already done."
+php artisan migrate:fresh --force --no-interaction --seed
 
 echo "==> Caching configuration..."
 php artisan config:cache
