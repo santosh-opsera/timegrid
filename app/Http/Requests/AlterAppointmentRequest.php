@@ -1,44 +1,43 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
-use Auth;
+use Illuminate\Validation\Rule;
 use Timegridio\Concierge\Models\Appointment;
-use Timegridio\Concierge\Models\Business;
 
 class AlterAppointmentRequest extends Request
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
-    public function authorize()
+    public function authorize(): bool
     {
-        $appointmentId = $this->get('appointment');
-        $businessId = $this->get('business');
+        $appointmentId = $this->integer('appointment');
+        $businessId = $this->integer('business');
 
-        $appointment = Appointment::find($appointmentId);
+        $appointment = Appointment::with('issuer')->find($appointmentId);
 
-        $authorize = (auth()->user()->isOwnerOf($businessId) || $appointment->issuer->id == auth()->id());
+        if ($appointment === null || auth()->user() === null) {
+            return false;
+        }
 
-        logger()->info("Authorize:$authorize");
+        $authorize = auth()->user()->isOwnerOf($businessId)
+            || $appointment->issuer->id === auth()->id();
+
+        logger()->info("Authorize:{$authorize}");
 
         return $authorize;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function rules()
+    public function rules(): array
     {
         return [
-            'business'    => 'required|integer',
-            'appointment' => 'required|integer',
-            'action'      => 'required|in:confirm,cancel,serve',
-            'widget'      => 'required|in:row,panel',
+            'business'    => ['required', 'integer', 'exists:businesses,id'],
+            'appointment' => ['required', 'integer', 'exists:appointments,id'],
+            'action'      => ['required', Rule::in(['confirm', 'cancel', 'serve'])],
+            'widget'      => ['required', Rule::in(['row', 'panel'])],
         ];
     }
 }

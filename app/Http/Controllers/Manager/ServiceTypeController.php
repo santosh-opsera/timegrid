@@ -1,68 +1,65 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Models\Business;
 use Timegridio\Concierge\Models\ServiceType;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 class ServiceTypeController extends Controller
 {
-    /**
-     * Show the form for editing the service types.
-     *
-     * @param Business $business Business to edit service of
-     *
-     * @return Response
-     */
-    public function edit(Business $business)
+    public function edit(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageServices', $business);
 
-        // BEGIN
-        $servicetypes = $business->servicetypes->all();
+        $servicetypes = $business->servicetypes()->get()->all();
 
-        return view('manager.businesses.servicetype.edit', compact('business', 'servicetypes'));
+        return Inertia::render('Business/Services/Types/Edit', [
+            'business'     => $business,
+            'servicetypes' => $servicetypes,
+        ]);
     }
 
-    /**
-     * Update the business service types.
-     *
-     * @param Business $business
-     * @param Request  $request
-     *
-     * @return Response
-     */
-    public function update(Business $business, Request $request)
+    public function update(Business $business, Request $request): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageServices', $business);
 
-        // BEGIN
+        $validated = $request->validate([
+            'servicetypes' => ['required', 'string'],
+        ]);
 
-        $servicetypeSheet = $request->input('servicetypes');
+        $servicetypeSheet = $validated['servicetypes'];
 
         $regex = '/(?P<name>[a-zA-Z\d\-\ ]+)\:(?P<description>[a-zA-Z\d\ ]+)/im';
 
         preg_match_all($regex, $servicetypeSheet, $matches, PREG_SET_ORDER);
 
         $publishing = collect($matches)->map(
-            function ($item) {
-                $data = array_only($item, ['name', 'description']);
-                $data['slug'] = str_slug($data['name']);
+            function (array $item): array {
+                $data = Arr::only($item, ['name', 'description']);
+                $data['slug'] = Str::slug($data['name']);
 
                 return $data;
-            });
+            }
+        );
 
         foreach ($business->servicetypes as $servicetype) {
-            if (!$this->isPublished($servicetype, $publishing)) {
+            if (! $this->isPublished($servicetype, $publishing)) {
                 $servicetype->delete();
             }
         }
@@ -78,7 +75,7 @@ class ServiceTypeController extends Controller
         return redirect()->route('manager.business.service.index', [$business]);
     }
 
-    protected function isPublished(ServiceType $servicetype, Collection &$publishing)
+    protected function isPublished(ServiceType $servicetype, Collection $publishing): bool
     {
         foreach ($publishing as $key => $item) {
             if ($item['name'] == $servicetype->name) {

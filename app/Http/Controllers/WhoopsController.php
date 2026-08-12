@@ -1,27 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
+
+use Inertia\Inertia;
+use Inertia\Response;
 
 class WhoopsController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Whoops Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller renders a user friendly exception handling.
-    |
-    */
-
-    /**
-     * Show the a friendly error screen to the user.
-     *
-     * @return Response
-     */
-    public function display()
+    public function display(): Response
     {
         logger()->info(__METHOD__);
 
-        return view('whoops');
+        return Inertia::render('Errors/Whoops');
     }
 }

@@ -1,21 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\User;
 
-use App\TG\Business\Token as BusinessToken;
 use App\Http\Controllers\Controller;
+use App\TG\Business\Token as BusinessToken;
 use Eluceo\iCal\Component\Calendar;
 use Eluceo\iCal\Component\Event;
+use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Validator;
 use Timegridio\Concierge\Models\Business;
-use Validator;
 
 class ICalController extends Controller
 {
-    public function download(Business $business, $token)
+    public function download(Business $business, string $token): Response
     {
         logger()->info(__METHOD__);
 
-        $validToken = with(new BusinessToken($business))->generate();
+        $validToken = (new BusinessToken($business))->generate();
 
         $validator = Validator::make(compact('token'), [
             'token' => "bail|required|alpha_num|max:32|in:{$validToken}",
@@ -25,9 +29,7 @@ class ICalController extends Controller
             abort(403);
         }
 
-        // BEGIN
         $vCalendar = new Calendar($business->slug);
-
         $vCalendar->setPublishedTTL('PT1H');
 
         $events = $this->buildEvents($business);
@@ -36,21 +38,28 @@ class ICalController extends Controller
             $vCalendar->addComponent($event);
         }
 
-        $type = 'text/calendar; charset=utf-8';
-        $disposition = 'attachment; filename="calendar.ics"';
-
         $content = $vCalendar->render();
 
         return response($content)
-                    ->header('Content-Type', $type)
-                    ->header('Content-Disposition', $disposition);
+            ->header('Content-Type', 'text/calendar; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="calendar.ics"');
     }
 
-    protected function buildEvents(Business $business)
+    /**
+     * @return list<Event>
+     */
+    protected function buildEvents(Business $business): array
     {
-        $businessAppointments = $business->bookings()->active()->get();
+        $businessAppointments = $business->bookings()
+            ->with(['contact', 'service', 'business'])
+            ->active()
+            ->get();
 
-        $ownerAppointments = $business->owner()->appointments()->active()->get();
+        $ownerAppointments = $business->owner()
+            ->appointments()
+            ->with(['contact', 'service', 'business'])
+            ->active()
+            ->get();
 
         $appointments = array_merge($businessAppointments->all(), $ownerAppointments->all());
 
@@ -59,25 +68,27 @@ class ICalController extends Controller
         foreach ($appointments as $appointment) {
             $vEvent = new Event();
 
-            $startAt = new \DateTime($appointment->start_at->timezone($business->timezone)->toDateTimeString(), new \DateTimeZone($business->timezone));
-            $endAt = new \DateTime($appointment->finish_at->timezone($business->timezone)->toDateTimeString(), new \DateTimeZone($business->timezone));
+            $startAt = new \DateTime(
+                $appointment->start_at->timezone($business->timezone)->toDateTimeString(),
+                new \DateTimeZone($business->timezone)
+            );
+            $endAt = new \DateTime(
+                $appointment->finish_at->timezone($business->timezone)->toDateTimeString(),
+                new \DateTimeZone($business->timezone)
+            );
 
             $vEvent->setDtStart($startAt);
             $vEvent->setDtEnd($endAt);
-
             $vEvent->setStatus($this->mapStatus($appointment->status));
-
             $vEvent->setUniqueId($appointment->business->slug.':'.$appointment->code.'@timegrid.io');
 
             $summary = $appointment->contact->firstname.'/'.
-                       $appointment->service->name.'@'.
-                       $appointment->business->slug.
-                       ' ['.$appointment->code.']';
+                $appointment->service->name.'@'.
+                $appointment->business->slug.
+                ' ['.$appointment->code.']';
 
             $vEvent->setSummary($summary);
-
             $vEvent->setDescription($appointment->comments);
-
             $vEvent->setUseTimezone(true);
 
             $events[] = $vEvent;
@@ -86,11 +97,7 @@ class ICalController extends Controller
         return $events;
     }
 
-    /**
-     * Map Timegridio\Concierge\Models\Appointment status into
-     * Eluceo\iCal\Component\Event for ICal status compatibility
-     */
-    protected function mapStatus($status)
+    protected function mapStatus(string $status): string
     {
         $mapping = [
             'R' => 'TENTATIVE',
@@ -99,6 +106,6 @@ class ICalController extends Controller
             'S' => 'CONFIRMED',
         ];
 
-        return array_get($mapping, $status, 'TENTATIVE');
+        return Arr::get($mapping, $status, 'TENTATIVE');
     }
 }

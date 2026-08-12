@@ -1,33 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Guest;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Models\Business;
 use Timegridio\Concierge\Models\Domain;
 
 class BusinessController extends Controller
 {
-    /**
-     * get Home.
-     *
-     * @param Business $business Business to display
-     *
-     * @return Response Rendered view for desired Business
-     */
-    public function getHome($slug)
+    public function getHome(string $slug): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('slug:%s', $slug));
 
-        if ($domain = Domain::where('slug', $slug)->first()) {
+        if ($domain = Domain::with('businesses')->where('slug', $slug)->first()) {
             return $this->getDomain($domain);
         }
 
-        if ($business = Business::where('slug', $slug)->first()) {
-            session()->set('guest.last-intended-business-home', $slug);
+        if ($business = Business::with(['services', 'category'])->where('slug', $slug)->first()) {
+            session()->put('guest.last-intended-business-home', $slug);
 
-            return view('guest.businesses.show', compact('business'));
+            return Inertia::render('Booking/Show', [
+                'business' => $business,
+            ]);
         }
 
         session()->forget('guest.last-intended-business-home');
@@ -39,21 +39,18 @@ class BusinessController extends Controller
         return redirect()->to('/login');
     }
 
-    /**
-     * get Domain.
-     *
-     * @return Response Rendered view of all existing Businesses belonging to Domain
-     */
-    public function getDomain(Domain $domain)
+    public function getDomain(Domain $domain): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
 
-        $businesses = $domain->businesses;
+        $businesses = $domain->businesses()->with('category')->get();
 
-        if (1 == $businesses->count()) {
+        if ($businesses->count() === 1) {
             return redirect(route('guest.business.home', $businesses->first()));
         }
 
-        return view('guest.businesses.index', compact('businesses'));
+        return Inertia::render('Directory', [
+            'businesses' => $businesses,
+        ]);
     }
 }

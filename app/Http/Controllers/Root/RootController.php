@@ -1,42 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Root;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class RootController extends Controller
 {
-    /**
-     * get Index.
-     *
-     * @return Response Show Root dashboard
-     */
-    public function getIndex()
+    public function getIndex(): Response
     {
         logger()->info(__METHOD__);
         logger()->warning('[ROOT ACCESS]');
 
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
+        $users = User::with(['businesses', 'contacts'])->get();
 
-        $users = User::all();
-
-        return view('root.dashboard', compact('users'));
+        return Inertia::render('Root/Dashboard', [
+            'users' => $users,
+        ]);
     }
 
-    /**
-     * Switch authentication into another user for support purpose.
-     *
-     * @return Response Show Root dashboard
-     */
-    public function getSudo($userId)
+    public function getSudo(int|string $userId): RedirectResponse
     {
         logger()->info(__METHOD__);
-
         logger()->warning("[!] ROOT SUDO userId:{$userId}");
-        auth()->loginUsingId($userId);
+
+        auth()->loginUsingId((int) $userId);
 
         flash()->warning('ADVICE: THIS IS FOR AUTHORIZED USE ONLY AND YOUR ACTIONS ARE BEING RECORDERED !!!');
 

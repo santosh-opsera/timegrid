@@ -1,65 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\TG\Availability\AvailabilityService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
-use Timegridio\Concierge\Concierge;
 use Timegridio\Concierge\Models\Business;
 
 class AvailabilityController extends Controller
 {
-    /**
-     * Concierge service implementation.
-     *
-     * @var Timegridio\Concierge\Concierge
-     */
-    private $availability;
+    public function __construct(
+        private readonly AvailabilityService $availability
+    ) {}
 
-    /**
-     * Create controller.
-     *
-     * @param Timegridio\Concierge\Concierge
-     */
-    public function __construct(AvailabilityService $availability)
-    {
-        parent::__construct();
-
-        $this->availability = $availability;
-    }
-
-    //////////
-    // AJAX //
-    //////////
-
-    /**
-     * Get available times.
-     *
-     * @param int    $businessId
-     * @param int    $serviceId
-     * @param string $date
-     *
-     * @return Symfony\Component\HttpFoundation\JsonResponse
-     */
-    public function getDates($businessId, $serviceId)
+    public function getDates(int|string $businessId, int|string $serviceId): JsonResponse
     {
         logger()->info(__METHOD__);
         logger()->info(serialize(compact('businessId', 'serviceId')));
 
-        $business = Business::findOrFail($businessId);
+        $business = Business::with('services')->findOrFail($businessId);
         $service = $business->services()->findOrFail($serviceId);
 
-        $days = $business->pref('availability_future_days');
+        $days = (int) $business->pref('availability_future_days');
         $startFrom = $business->pref('appointment_take_today') ? 'today' : 'tomorrow';
 
         $baseDate = Carbon::parse($startFrom);
         $endDate = $baseDate->copy()->addDays($days);
 
-        // $this->availability->excludeDates(['humanresource-slug:YYYY-MM-DD']);
-
-        $this->excludeDates($businessId);
+        $this->excludeDates((int) $businessId);
 
         $dates = $this->availability->getDates($business, $service->id);
 
@@ -68,8 +40,8 @@ class AvailabilityController extends Controller
         logger()->debug('Disabled Dates:'.serialize($disabledDates));
 
         return response()->json([
-            'business' => $business->id,
-            'service'  => [
+            'business'      => $business->id,
+            'service'       => [
                 'id'       => $service->id,
                 'duration' => $service->duration,
             ],
@@ -77,24 +49,19 @@ class AvailabilityController extends Controller
             'disabledDates' => $disabledDates,
             'startDate'     => $baseDate->toDateString(),
             'endDate'       => $endDate->toDateString(),
-        ], 200);
+        ]);
     }
 
-    /**
-     * Get available times.
-     *
-     * @param int    $businessId
-     * @param int    $serviceId
-     * @param string $date
-     *
-     * @return Symfony\Component\HttpFoundation\JsonResponse
-     */
-    public function getTimes($businessId, $serviceId, $date, $preferredTimezone = false)
-    {
+    public function getTimes(
+        int|string $businessId,
+        int|string $serviceId,
+        string $date,
+        bool|string $preferredTimezone = false
+    ): JsonResponse {
         logger()->info(__METHOD__);
         logger()->info(serialize(compact('businessId', 'serviceId', 'date', 'preferredTimezone')));
 
-        $business = Business::findOrFail($businessId);
+        $business = Business::with('services')->findOrFail($businessId);
         $service = $business->services()->findOrFail($serviceId);
 
         $timezone = $this->decideTimezone($preferredTimezone, $business->timezone);
@@ -112,22 +79,30 @@ class AvailabilityController extends Controller
             'date'     => $date,
             'times'    => $times,
             'timezone' => $timezone,
-        ], 200);
+        ]);
     }
 
-    protected function decideTimezone($preferredTimezone, $fallbackTimezone)
+    protected function decideTimezone(bool|string $preferredTimezone, string $fallbackTimezone): string
     {
-        if ($preferredTimezone == false) {
-            $timezone = auth()->guest() ? $fallbackTimezone : auth()->user()->pref('timezone');
+        if ($preferredTimezone === false) {
+            $timezone = auth()->guest()
+                ? $fallbackTimezone
+                : auth()->user()->pref('timezone');
+        } else {
+            $timezone = (string) $preferredTimezone;
         }
 
         return $timezone ?: $fallbackTimezone;
     }
 
-    protected function getDisabledDates(Carbon $start, Carbon $end, array $enabledDates)
+    /**
+     * @param  list<string>  $enabledDates
+     * @return list<string>
+     */
+    protected function getDisabledDates(Carbon $start, Carbon $end, array $enabledDates): array
     {
         $interval = new \DateInterval('P1D');
-        $daterange = new \DatePeriod($start, $interval, $end->addDay());
+        $daterange = new \DatePeriod($start, $interval, $end->copy()->addDay());
 
         $dates = [];
         foreach ($daterange as $date) {
@@ -137,11 +112,11 @@ class AvailabilityController extends Controller
         return array_values(array_diff($dates, $enabledDates));
     }
 
-    protected function excludeDates($businessId)
+    protected function excludeDates(int $businessId): void
     {
         $filepath = "business/{$businessId}/ical/ical-exclusion.compiled";
-        if (!Storage::exists($filepath)) {
-            // logger()->debug('No ical-exclude.compiled file found:'.$filepath);
+
+        if (! Storage::exists($filepath)) {
             return;
         }
 

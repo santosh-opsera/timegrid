@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\User;
 
 use App\Events\NewAppointmentWasBooked;
 use App\Events\NewSoftAppointmentWasBooked;
 use App\Http\Controllers\Controller;
-use Carbon;
-use Event;
+use App\Http\Requests\StoreAppointmentRequest;
+use App\Models\User;
+use Carbon\Carbon;
+use Fenos\Notifynder\Facades\Notifynder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use JavaScript;
-use Notifynder;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Concierge;
 use Timegridio\Concierge\Exceptions\DuplicatedAppointmentException;
 use Timegridio\Concierge\Models\Appointment;
@@ -18,57 +23,39 @@ use Timegridio\Concierge\Models\Contact;
 
 class AgendaController extends Controller
 {
-    /**
-     * Concierge service implementation.
-     *
-     * @var Timegridio\Concierge\Concierge
-     */
-    private $concierge;
+    public function __construct(
+        private readonly Concierge $concierge
+    ) {}
 
-    /**
-     * Create Controller.
-     *
-     * @param Timegridio\Concierge\Concierge
-     */
-    public function __construct(Concierge $concierge)
-    {
-        $this->concierge = $concierge;
-
-        parent::__construct();
-    }
-
-    /**
-     * List all pending appointments.
-     *
-     * @return Response Rendered list view for User Appointments
-     */
-    public function getIndex()
+    public function getIndex(): Response
     {
         logger()->info(__METHOD__);
 
-        $appointments = auth()->user()->appointments()->orderBy('start_at')->unarchived()->get();
+        $appointments = auth()->user()
+            ->appointments()
+            ->with(['business', 'service', 'contact'])
+            ->orderBy('start_at')
+            ->unarchived()
+            ->get();
 
-        return view('user.appointments.index', compact('appointments'));
+        return Inertia::render('Appointments/Index', [
+            'appointments' => $appointments,
+        ]);
     }
 
-    /**
-     * get Availability for Business.
-     *
-     * @param Business $business Business to query
-     *
-     * @return Response Rendered view of Appointment booking form
-     */
-    public function getAvailability(Business $business, Request $request)
+    public function getAvailability(Business $business, Request $request): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
+
+        $contact = null;
 
         if (auth()->user()) {
-            if ($behalofOfId = $request->input('behalfOfId')) {
+            if ($behalfOfId = $request->input('behalfOfId')) {
                 $this->authorize('manageContacts', $business);
 
-                $contact = $business->contacts()->find($behalofOfId);
+                $contact = $business->contacts()->find($behalfOfId);
             } else {
-                if (!$contact = auth()->user()->getContactSubscribedTo($business->id)) {
+                if (! $contact = auth()->user()->getContactSubscribedTo($business->id)) {
                     logger()->info('  [ADVICE] User not subscribed to Business');
 
                     flash()->warning(trans('user.booking.msg.you_are_not_subscribed_to_business'));
@@ -78,14 +65,14 @@ class AgendaController extends Controller
             }
 
             Notifynder::category('user.checkingVacancies')
-               ->from('App\Models\User', auth()->id())
-               ->to('Timegridio\Concierge\Models\Business', $business->id)
-               ->url('http://localhost')
-               ->send();
+                ->from('App\Models\User', auth()->id())
+                ->to('Timegridio\Concierge\Models\Business', $business->id)
+                ->url('http://localhost')
+                ->send();
         }
 
         $date = $request->input('date', 'today');
-        $days = $request->input('days', $business->pref('availability_future_days'));
+        $days = (int) $request->input('days', $business->pref('availability_future_days'));
 
         $startFromDate = $this->sanitizeDate($date);
 
@@ -95,56 +82,49 @@ class AgendaController extends Controller
 
         $includeToday = $business->pref('appointment_take_today');
 
-        if ($startFromDate->isToday() && !$includeToday) {
+        if ($startFromDate->isToday() && ! $includeToday) {
             $startFromDate = $this->sanitizeDate('tomorrow');
         }
 
         $availability = $this->concierge
-                             ->business($business)
-                             ->vacancies()
-                             ->generateAvailability($startFromDate->toDateString(), $days);
+            ->business($business)
+            ->vacancies()
+            ->generateAvailability($startFromDate->toDateString(), $days);
 
-        JavaScript::put([
-            'language'  => $this->getActiveLanguage($business->locale),
-            'startDate' => $startFromDate->toDateString(),
-            'endDate'   => $startFromDate->addDays($days)->toDateString(),
+        $endDate = $startFromDate->copy()->addDays($days);
+
+        $business->load(['services.servicetype']);
+
+        return Inertia::render('Booking/Book', [
+            'business'      => $business,
+            'availability'  => $availability,
+            'startFromDate' => $startFromDate->toDateString(),
+            'endDate'       => $endDate->toDateString(),
+            'contact'       => $contact,
+            'language'      => $this->getActiveLanguage($business->locale),
         ]);
-
-        return view(
-            'user.appointments.'.$business->strategy.'.book',
-            compact('business', 'availability', 'startFromDate', 'contact')
-        );
     }
 
-    /**
-     * post Store.
-     *
-     * @param Request $request Input data of booking form
-     *
-     * @return Response Redirect to Appointments listing
-     */
-    public function postStore(Request $request)
+    public function postStore(StoreAppointmentRequest $request): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
 
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
+        $validated = $request->validated();
 
-        $business = Business::findOrFail($request->input('businessId'));
-        $email = $request->input('email');
-        $contactId = $request->input('contact_id');
+        $business = Business::with('services')->findOrFail($validated['businessId']);
+        $email = $validated['email'] ?? null;
+        $contactId = $validated['contact_id'] ?? null;
         $isOwner = false;
 
         $issuer = auth()->user();
 
         if ($issuer) {
             $isOwner = $issuer->isOwnerOf($business->id);
-            $contact = $this->findSubscrbedContact($issuer, $isOwner, $business, $contactId);
+            $contact = $this->findSubscribedContact($issuer, $isOwner, $business, $contactId);
         } else {
             $contact = $this->getContact($business, $email);
 
-            if (!$contact) {
+            if (! $contact) {
                 logger()->info('[ADVICE] Not subscribed');
 
                 flash()->warning(trans('user.booking.msg.store.not-registered'));
@@ -152,23 +132,19 @@ class AgendaController extends Controller
                 return redirect()->back();
             }
 
-            auth()->once(compact('email'));
+            auth()->once(['email' => $email]);
         }
 
-        // Authorize contact is subscribed to Business
-        // ...
+        $service = $business->services()->findOrFail($validated['service_id']);
 
-        $serviceId = $request->input('service_id');
-        $service = $business->services()->find($serviceId);
-
-        $date = Carbon::parse($request->input('_date'))->toDateString();
-        $time = Carbon::parse($request->input('_time'))->toTimeString();
-        $timezone = $request->input('_timezone') ?: $business->timezone;
-
-        $comments = $request->input('comments');
-        $issuer = auth()->id();
+        $date = Carbon::parse($validated['_date'])->toDateString();
+        $time = Carbon::parse($validated['_time'])->toTimeString();
+        $timezone = $validated['_timezone'] ?? $business->timezone;
+        $comments = $validated['comments'] ?? null;
+        $issuerId = auth()->id();
 
         $reservation = compact('issuer', 'contact', 'service', 'date', 'time', 'timezone', 'comments');
+        $reservation['issuer'] = $issuerId;
 
         logger()->info('Reservation:'.print_r($reservation, true));
 
@@ -188,7 +164,7 @@ class AgendaController extends Controller
             return redirect()->route('user.agenda');
         }
 
-        if (false === $appointment) {
+        if ($appointment === false) {
             logger()->info('[ADVICE] Unable to book');
 
             flash()->warning(trans('user.booking.msg.store.error'));
@@ -196,14 +172,18 @@ class AgendaController extends Controller
             return redirect()->back();
         }
 
+        $appointment->load(['business', 'service', 'contact']);
+
         logger()->info('Appointment saved successfully');
 
         flash()->success(trans('user.booking.msg.store.success', ['code' => $appointment->code]));
 
-        if (!$issuer) {
+        if (! $issuerId) {
             event(new NewSoftAppointmentWasBooked($appointment));
 
-            return view('guest.appointment.show', compact('appointment'));
+            return Inertia::render('Booking/Show', [
+                'appointment' => $appointment,
+            ]);
         }
 
         event(new NewAppointmentWasBooked(auth()->user(), $appointment));
@@ -215,39 +195,33 @@ class AgendaController extends Controller
         return redirect()->route('user.agenda', '#'.$appointment->code);
     }
 
-    protected function getContact(Business $business, $email)
+    protected function getContact(Business $business, ?string $email): ?Contact
     {
         if ($business->pref('allow_guest_registration')) {
-            $contact = $business->addressbook()->register(compact('email'));
-        } else {
-            $contact = $business->addressbook()->getSubscribed($email);
+            return $business->addressbook()->register(compact('email'));
         }
 
-        return $contact;
+        return $business->addressbook()->getSubscribed($email);
     }
 
-    public function getValidate(Request $request, Business $business)
+    public function getValidate(Request $request, Business $business): Response|RedirectResponse
     {
-        $code = $request->input('code');
-        $email = $request->input('email');
+        $validated = $request->validate([
+            'code'  => ['required', 'string', 'min:4'],
+            'email' => ['required', 'email'],
+        ]);
 
-        if (strlen($code) < 4) {
-            flash()->error(trans('user.booking.msg.validate.error.bad-code'));
-
-            return view('guest.appointment.invalid');
-        }
-
-        // Get the Appointment starting with provided Hash and having Contact
-        // with the provided email.
+        $code = $validated['code'];
+        $email = $validated['email'];
 
         $appointment = $business->bookings()
-                                ->with('contact')
-                                ->where('hash', 'like', "{$code}%")
-                                ->whereHas('Contact', function ($q) use ($email) {
-                                    $q->where('email', $email);
-                                })->first();
+            ->with(['contact', 'service', 'business'])
+            ->where('hash', 'like', "{$code}%")
+            ->whereHas('Contact', function ($q) use ($email): void {
+                $q->where('email', $email);
+            })->first();
 
-        if (!$appointment) {
+        if (! $appointment) {
             flash()->error(trans('user.booking.msg.validate.error.no-appointment-was-found'));
 
             return redirect()->to('/');
@@ -256,17 +230,21 @@ class AgendaController extends Controller
         if ($appointment->status == Appointment::STATUS_CONFIRMED) {
             flash()->success(trans('user.booking.msg.validate.success.your-appointment-is-already-confirmed'));
 
-            return view('guest.appointment.show', compact('appointment'));
+            return Inertia::render('Booking/Show', [
+                'appointment' => $appointment,
+            ]);
         }
 
         $appointment->doConfirm();
 
         flash()->success(trans('user.booking.msg.validate.success.your-appointment-was-confirmed'));
 
-        return view('guest.appointment.show', compact('appointment'));
+        return Inertia::render('Booking/Show', [
+            'appointment' => $appointment,
+        ]);
     }
 
-    protected function findSubscrbedContact($issuer, $isOwner, Business $business, $contactId)
+    protected function findSubscribedContact(User $issuer, bool $isOwner, Business $business, ?int $contactId): ?Contact
     {
         if ($contactId && $isOwner) {
             return $business->contacts()->find($contactId);
@@ -275,31 +253,19 @@ class AgendaController extends Controller
         return $issuer->getContactSubscribedTo($business->id);
     }
 
-    /////////////
-    // HELPERS //
-    /////////////
-
-    protected function getActiveLanguage($locale)
+    protected function getActiveLanguage(string $locale): string
     {
         return session()->get('language', substr($locale, 0, 2));
     }
 
-    /**
-     * Sanitize Date String.
-     *
-     * @param string $dateString
-     *
-     * @return Carbon\Carbon
-     */
-    protected function sanitizeDate($dateString)
+    protected function sanitizeDate(string $dateString): Carbon
     {
         try {
-            $date = Carbon::parse($dateString);
+            return Carbon::parse($dateString);
         } catch (\Exception $e) {
             logger()->warning('Unexpected date string: '.$dateString);
-            $date = Carbon::now();
-        }
 
-        return $date;
+            return Carbon::now();
+        }
     }
 }

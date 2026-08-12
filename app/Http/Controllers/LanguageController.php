@@ -1,17 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
+
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 
 class LanguageController extends Controller
 {
-    /**
-     * Switch Language.
-     *
-     * @param string $posixLocale Language iso code
-     *
-     * @return Redirect HTTP Redirect
-     */
-    public function switchLang($posixLocale)
+    public function switchLang(string $posixLocale): RedirectResponse
     {
         logger()->info(sprintf('%s: %s', __METHOD__, $posixLocale));
 
@@ -22,22 +20,13 @@ class LanguageController extends Controller
         return redirect()->back();
     }
 
-    /////////////
-    // HELPERS //
-    /////////////
-
-    /**
-     * Set language to session based on the selected POSIX language string.
-     *
-     * @param string $posixLocale Requested language
-     */
-    protected function setSessionLanguage($posixLocale)
+    protected function setSessionLanguage(string $posixLocale): void
     {
         $localeSubtags = locale_parse($posixLocale);
-        $language = array_get($localeSubtags, 'language');
+        $language = Arr::get($localeSubtags, 'language');
 
-        session()->set('language', $language);
-        session()->set('applocale', $posixLocale);
+        session()->put('language', $language);
+        session()->put('applocale', $posixLocale);
 
         logger()->info("Language Switched: LANG='{$language}' POSIX='{$posixLocale}'");
     }

@@ -1,60 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Events\NewUserWasRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
-use Validator;
+use Illuminate\Support\Facades\Validator as ValidatorFacade;
 
 class RegisterController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Register Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles the registration of new users as well as their
-    | validation and creation. By default this controller uses a trait to
-    | provide this functionality without requiring any additional code.
-    |
-    */
-
     use RegistersUsers;
 
-    /**
-     * Where to redirect users after login / registration.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/home';
+    protected string $redirectTo = '/home';
 
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('guest');
     }
 
     /**
-     * Get a validator for an incoming registration request.
-     *
-     * @param  array  $data
-     *
-     * @return \Illuminate\Contracts\Validation\Validator
+     * @param  array<string, mixed>  $data
      */
-    protected function validator(array $data)
+    protected function validator(array $data): Validator
     {
         $rules = [
-                'email'                => 'required|email|max:255|unique:users',
-                'password'             => 'required|confirmed|min:6',
-                'g-recaptcha-response' => 'required|captcha',
-                'allow_register'       => 'required|accepted',
-            ];
+            'name'                 => ['required', 'string', 'max:255'],
+            'email'                => ['required', 'email', 'max:255', 'unique:users'],
+            'password'             => ['required', 'confirmed', 'min:6'],
+            'g-recaptcha-response' => ['required', 'captcha'],
+            'allow_register'       => ['required', 'accepted'],
+        ];
 
         if (app()->environment('local') || app()->environment('testing')) {
             unset($rules['g-recaptcha-response']);
@@ -66,17 +45,13 @@ class RegisterController extends Controller
             'allow_register.accepted' => trans('app.allow_register'),
         ];
 
-        return Validator::make($data, $rules, $messages);
+        return ValidatorFacade::make($data, $rules, $messages);
     }
 
     /**
-     * Create a new user instance after a valid registration.
-     *
-     * @param  array  $data
-     *
-     * @return User
+     * @param  array<string, mixed>  $data
      */
-    protected function create(array $data)
+    protected function create(array $data): User
     {
         $user = User::create([
             'username' => md5("{$data['name']}/{$data['email']}"),
@@ -84,6 +59,7 @@ class RegisterController extends Controller
             'email'    => $data['email'],
             'password' => bcrypt($data['password']),
         ]);
+
         event(new NewUserWasRegistered($user));
 
         return $user;

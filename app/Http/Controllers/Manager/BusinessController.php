@@ -1,69 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Manager;
 
 use App\Exceptions\BusinessAlreadyRegistered;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BusinessFormRequest;
+use App\Http\Requests\StoreBusinessRequest;
+use App\Http\Requests\UpdateBusinessRequest;
 use App\TG\Business\Dashboard;
 use App\TG\BusinessService;
 use Carbon\Carbon;
 use Fenos\Notifynder\Facades\Notifynder;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Models\Business;
 use Timegridio\Concierge\Models\Category;
 
 class BusinessController extends Controller
 {
-    /**
-     * Location data.
-     *
-     * @var array
-     */
-    protected $location = null;
+    /** @var array<string, mixed>|null */
+    protected ?array $location = null;
 
-    /**
-     * Business service.
-     *
-     * @var App\TG\BusinessService
-     */
-    private $businessService;
+    public function __construct(
+        private readonly BusinessService $businessService,
+        private readonly Carbon $time
+    ) {}
 
-    /**
-     * Current localized time.
-     *
-     * @var Carbon\Carbon
-     */
-    private $time;
-
-    /**
-     * Create Controller.
-     *
-     * @param App\TG\BusinessService $businessService
-     */
-    public function __construct(BusinessService $businessService, Carbon $time)
-    {
-        $this->businessService = $businessService;
-
-        $this->time = $time;
-
-        parent::__construct();
-    }
-
-    /**
-     * List all businesses.
-     *
-     * @return Response Rendered view for Businesses listing
-     */
-    public function index()
+    public function index(): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
 
-        // BEGIN
+        $businesses = auth()->user()->businesses()->with('category')->get();
 
-        $businesses = auth()->user()->businesses;
-
-        if ($businesses->count() == 1) {
+        if ($businesses->count() === 1) {
             logger()->info('Only one business to show');
 
             flash()->success(trans('manager.businesses.msg.index.only_one_found'));
@@ -73,65 +45,53 @@ class BusinessController extends Controller
 
         $user = auth()->user();
 
-        return view('manager.businesses.index', compact('businesses', 'user'));
+        return Inertia::render('Business/Index', [
+            'businesses' => $businesses,
+            'user'       => $user,
+        ]);
     }
 
-    /**
-     * create Business.
-     *
-     * @return Response Rendered view of Business creation form
-     */
-    public function create($plan = 'free')
+    public function create(string $plan = 'free'): Response
     {
         logger()->info(__METHOD__);
         logger()->info("plan:$plan");
 
-        // BEGIN
-
         $timezone = $this->guessTimezone(null);
-
         $countryCode = $this->getCountry();
-
         $locale = app()->getLocale();
-
         $categories = $this->listCategories();
-
         $business = new Business();
 
-        return view('manager.businesses.create', compact(
-            'business',
-            'timezone',
-            'categories',
-            'plan',
-            'countryCode',
-            'locale'
-        ));
+        return Inertia::render('Business/Create', [
+            'business'    => $business,
+            'timezone'    => $timezone,
+            'categories'  => $categories,
+            'plan'        => $plan,
+            'countryCode' => $countryCode,
+            'locale'      => $locale,
+        ]);
     }
 
-    /**
-     * store Business.
-     *
-     * @param BusinessFormRequest $request Business form Request
-     *
-     * @return Response Redirect
-     */
-    public function store(BusinessFormRequest $request)
+    public function store(StoreBusinessRequest $request): RedirectResponse
     {
         logger()->info(__METHOD__);
 
-        // BEGIN
+        $validated = $request->validated();
 
         try {
-            $business = $this->businessService->register(auth()->user(), $request->all(), $request->get('category'));
+            $business = $this->businessService->register(
+                auth()->user(),
+                $validated,
+                (int) $validated['category']
+            );
 
             $this->businessService->setup($business);
         } catch (BusinessAlreadyRegistered $exception) {
             flash()->error(trans('manager.businesses.msg.store.business_already_exists'));
 
-            return redirect()->back()->withInput(request()->all());
+            return redirect()->back()->withInput($validated);
         }
 
-        // Generate local notification
         $businessName = $business->name;
         Notifynder::category('user.registeredBusiness')
             ->from('App\Models\User', auth()->id())
@@ -140,30 +100,19 @@ class BusinessController extends Controller
             ->extra(compact('businessName'))
             ->send();
 
-        // Redirect success
         flash()->success(trans('manager.businesses.msg.store.success'));
 
         return redirect()->route('manager.business.service.create', $business);
     }
 
-    /**
-     * show Business.
-     *
-     * @param Business            $business Business to show
-     * @param BusinessFormRequest $request  Business form Request
-     *
-     * @return Response Rendered view for Business show
-     */
-    public function show(Business $business)
+    public function show(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manage', $business);
 
-        // BEGIN
-
-        session()->set('selected.business', $business);
+        session()->put('selected.business', $business);
 
         $notifications = Notifynder::entity(Business::class)->getNotRead($business->id, 20);
 
@@ -172,70 +121,60 @@ class BusinessController extends Controller
         $this->time->timezone($business->timezone);
 
         $dashboard = new Dashboard($business, $this->time);
-
         $boxes = $dashboard->getBoxes();
-
         $time = $this->time->toTimeString();
 
-        return view('manager.businesses.show', compact('business', 'notifications', 'boxes', 'time'));
+        $business->load(['category', 'services', 'contacts']);
+
+        return Inertia::render('Business/Show', [
+            'business'      => $business,
+            'notifications' => $notifications,
+            'boxes'         => $boxes,
+            'time'          => $time,
+        ]);
     }
 
-    /**
-     * edit Business.
-     *
-     * @param Business $business Business to edit
-     *
-     * @return Response Rendered view of Business edit form
-     */
-    public function edit(Business $business)
+    public function edit(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('update', $business);
 
-        // BEGIN
-
         $timezone = $this->guessTimezone($business->timezone);
-
         $categories = $this->listCategories();
-
         $category = $business->category_id;
 
         logger()->info(sprintf('businessId:%s timezone:%s category:%s', $business->id, $timezone, $category));
 
-        return view('manager.businesses.edit', compact('business', 'category', 'categories', 'timezone'));
+        return Inertia::render('Business/Edit', [
+            'business'   => $business,
+            'category'   => $category,
+            'categories' => $categories,
+            'timezone'   => $timezone,
+        ]);
     }
 
-    /**
-     * update Business.
-     *
-     * @param Business            $business Business to update
-     * @param BusinessFormRequest $request  Business form Request
-     *
-     * @return Response Redirect
-     */
-    public function update(Business $business, BusinessFormRequest $request)
+    public function update(Business $business, UpdateBusinessRequest $request): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('update', $business);
 
-        // BEGIN
-        $category = $request->get('category');
+        $validated = $request->validated();
+        $category = (int) $validated['category'];
 
-        $data = $request->only([
-                'name',
-                'description',
-                'timezone',
-                'postal_address',
-                'phone',
-                'social_facebook',
-        ]);
+        $data = collect($validated)->only([
+            'name',
+            'description',
+            'timezone',
+            'postal_address',
+            'phone',
+            'social_facebook',
+        ])->all();
 
         $this->businessService->update($business, $data);
-
         $this->businessService->setCategory($business, $category);
 
         flash()->success(trans('manager.businesses.msg.update.success'));
@@ -243,21 +182,13 @@ class BusinessController extends Controller
         return redirect()->route('manager.business.show', compact('business'));
     }
 
-    /**
-     * destroy Business.
-     *
-     * @param Business $business Business to destroy
-     *
-     * @return Response Redirect to Businesses index
-     */
-    public function destroy(Business $business)
+    public function destroy(Business $business): RedirectResponse
     {
         logger()->info(__METHOD__);
 
         $this->authorize('destroy', $business);
 
         logger()->info(sprintf('Deactivating: businessId:%s', $business->id));
-        // BEGIN
 
         $this->businessService->deactivate($business);
 
@@ -266,36 +197,19 @@ class BusinessController extends Controller
         return redirect()->route('manager.business.index');
     }
 
-    /////////////
-    // HELPERS //
-    /////////////
-
     /**
-     * get business category list.
-     *
-     * TODO: SHOULD BE USED WITH VIEW COMPOSER
-     *
-     * @return array list of categories for combo
+     * @return \Illuminate\Support\Collection<int, string>
      */
     protected function listCategories()
     {
         return Category::pluck('slug', 'id')->transform(
-            function ($item) {
-                return trans("app.business.category.{$item}");
-            }
+            fn (string $item): string => trans("app.business.category.{$item}")
         );
     }
 
-    /**
-     * guess user (client) timezone.
-     *
-     * @param string $timezone Default or fallback timezone
-     *
-     * @return string Guessed or fallbacked timezone
-     */
-    protected function guessTimezone($timezone = null)
+    protected function guessTimezone(?string $timezone = null): ?string
     {
-        if (!empty($timezone)) {
+        if (! empty($timezone)) {
             return $timezone;
         }
 
@@ -305,17 +219,22 @@ class BusinessController extends Controller
 
         $identifiers = timezone_identifiers_list();
 
-        return in_array($this->location['timezone'], $identifiers) ? $this->location['timezone'] : $timezone;
+        return in_array($this->location['timezone'], $identifiers, true)
+            ? $this->location['timezone']
+            : $timezone;
     }
 
-    protected function getCountry()
+    protected function getCountry(): ?string
     {
         $this->getLocation();
 
-        return array_get($this->location, 'isoCode', null);
+        return Arr::get($this->location, 'isoCode');
     }
 
-    protected function getLocation()
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getLocation(): array
     {
         if ($this->location === null) {
             logger()->info('Getting location');

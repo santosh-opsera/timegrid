@@ -1,65 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreVacancyRequest;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
-use JavaScript;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Concierge;
 use Timegridio\Concierge\Models\Business;
-use Timegridio\Concierge\Models\HumanResource;
+use Timegridio\Concierge\Models\Humanresource;
 use Timegridio\Concierge\Models\Service;
 use Timegridio\Concierge\Vacancy\VacancyParser;
 
 class BusinessVacancyController extends Controller
 {
-    /**
-     * Concierge.
-     *
-     * @var Timegridio\Concierge\Concierge
-     */
-    private $concierge;
+    public function __construct(
+        private readonly Concierge $concierge
+    ) {}
 
-    /**
-     * Create controller.
-     *
-     * @param Timegridio\Concierge\Concierge
-     */
-    public function __construct(Concierge $concierge)
-    {
-        $this->concierge = $concierge;
-
-        parent::__construct();
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
-    public function create(Business $business)
+    public function create(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageVacancies', $business);
 
-        // BEGIN
-
-        JavaScript::put([
-            'services'       => $business->services->pluck('slug')->all(),
-            'humanresources' => $business->humanresources->pluck('slug')->all(),
-            'lang'           => $this->getActiveLanguage($business->locale),
-        ]);
+        $business->load(['services', 'humanresources']);
 
         $daysQuantity = $business->pref('vacancy_edit_days_quantity', config('root.vacancy_edit_days'));
 
         $dates = $this->concierge
-                      ->business($business)
-                      ->vacancies()
-                      ->generateAvailability('today', $daysQuantity);
+            ->business($business)
+            ->vacancies()
+            ->generateAvailability('today', $daysQuantity);
 
         if ($business->services->isEmpty()) {
             flash()->warning(trans('manager.vacancies.msg.edit.no_services'));
@@ -70,10 +49,11 @@ class BusinessVacancyController extends Controller
         $template = $this->recallStatements($business->id);
         if ($advanced && empty($template)) {
             $template = $this->concierge
-                             ->vacancies()
-                             ->builder()
-                             ->getTemplate($business, $business->services()->first());
+                ->vacancies()
+                ->builder()
+                ->getTemplate($business, $business->services()->first());
         }
+
         $servicesList = $business->services()->pluck('name', 'slug');
         $humanresourcesList = $business->humanresources()->pluck('name', 'slug');
         $weekdaysList = [
@@ -84,35 +64,39 @@ class BusinessVacancyController extends Controller
             'fri' => trans('datetime.weekday.friday'),
             'sat' => trans('datetime.weekday.saturday'),
             'sun' => trans('datetime.weekday.sunday'),
-            ];
+        ];
 
         $startAt = Carbon::parse('today '.$business->pref('start_at').' '.$business->timezone)->format('h:i A');
         $finishAt = Carbon::parse('today '.$business->pref('finish_at').' '.$business->timezone)->format('h:i A');
 
-        $viewParams = compact('business', 'dates', 'advanced', 'template', 'servicesList', 'humanresourcesList', 'weekdaysList', 'startAt', 'finishAt');
-
-        return view('manager.businesses.vacancies.edit', $viewParams);
+        return Inertia::render('Business/Vacancies/Index', [
+            'business'           => $business,
+            'dates'              => $dates,
+            'advanced'           => $advanced,
+            'template'           => $template,
+            'servicesList'       => $servicesList,
+            'humanresourcesList' => $humanresourcesList,
+            'weekdaysList'       => $weekdaysList,
+            'startAt'            => $startAt,
+            'finishAt'           => $finishAt,
+            'editorData'         => [
+                'services'       => $business->services->pluck('slug')->all(),
+                'humanresources' => $business->humanresources->pluck('slug')->all(),
+                'lang'           => $this->getActiveLanguage($business->locale),
+            ],
+            'mode' => 'create',
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return Response
-     */
-    public function store(Business $business, Request $request)
+    public function store(Business $business, StoreVacancyRequest $request): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageVacancies', $business);
 
-        // BEGIN
-
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
-
-        $publishedVacancies = $request->get('vacancy');
+        $validated = $request->validated();
+        $publishedVacancies = $validated['vacancy'];
 
         $changed = false;
 
@@ -125,16 +109,16 @@ class BusinessVacancyController extends Controller
                     continue;
                 }
 
-                $changed |= true;
+                $changed = true;
 
                 $this->concierge
-                     ->business($business)
-                     ->vacancies()
-                     ->publish($date, $startAt, $finishAt, $serviceId, $capacity);
+                    ->business($business)
+                    ->vacancies()
+                    ->publish($date, $startAt, $finishAt, $serviceId, $capacity);
             }
         }
 
-        if (!$changed) {
+        if (! $changed) {
             logger()->warning('Nothing to update');
 
             flash()->warning(trans('manager.vacancies.msg.store.nothing_changed'));
@@ -149,31 +133,19 @@ class BusinessVacancyController extends Controller
         return redirect()->route('manager.business.show', [$business]);
     }
 
-    /**
-     * Store vacancies from a command string.
-     *
-     * @param Business $business
-     * @param Request  $request
-     *
-     * @return Illuminate\Http\Response
-     */
-    public function storeBatch(Business $business, Request $request, VacancyParser $vacancyParser)
+    public function storeBatch(Business $business, StoreVacancyRequest $request, VacancyParser $vacancyParser): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageVacancies', $business);
 
-        // BEGIN
-
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
+        $validated = $request->validated();
 
         $this->concierge->business($business);
 
-        $statements = $request->input('vacancies');
-        $unpublish = $request->input('unpublish');
+        $statements = $validated['vacancies'];
+        $unpublish = $validated['unpublish'] ?? false;
 
         if ($unpublish) {
             $this->concierge->vacancies()->unpublish();
@@ -181,7 +153,7 @@ class BusinessVacancyController extends Controller
 
         $publishedVacancies = $vacancyParser->parseStatements($statements);
 
-        if (!$this->concierge->vacancies()->updateBatch($business, $publishedVacancies)) {
+        if (! $this->concierge->vacancies()->updateBatch($business, $publishedVacancies)) {
             logger()->warning('Nothing to update');
 
             flash()->warning(trans('manager.vacancies.msg.store.nothing_changed'));
@@ -189,7 +161,7 @@ class BusinessVacancyController extends Controller
             return redirect()->back();
         }
 
-        if ($request->input('remember')) {
+        if ($request->boolean('remember')) {
             $this->rememberStatements($business->id, $statements);
         }
 
@@ -200,56 +172,49 @@ class BusinessVacancyController extends Controller
         return redirect()->route('manager.business.show', [$business]);
     }
 
-    /**
-     * Show the published vacancies timetable.
-     *
-     * @return Response
-     */
-    public function show(Business $business)
+    public function show(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageVacancies', $business);
-
-        // BEGIN
-
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
 
         $daysQuantity = $business->pref('vacancy_edit_days_quantity', config('root.vacancy_edit_days'));
 
-        $vacancies = $business->vacancies()->with('Appointments')->get();
+        $vacancies = $business->vacancies()->with('appointments')->get();
 
         $timetable = $this->concierge
-                          ->business($business)
-                          ->timetable()
-                          ->buildTimetable($vacancies, 'today', $daysQuantity);
+            ->business($business)
+            ->timetable()
+            ->buildTimetable($vacancies, 'today', $daysQuantity);
 
-        if ($business->services->isEmpty()) {
+        if ($business->services()->count() === 0) {
             flash()->warning(trans('manager.vacancies.msg.edit.no_services'));
         }
 
-        return view('manager.businesses.vacancies.show', compact('business', 'timetable'));
+        return Inertia::render('Business/Vacancies/Index', [
+            'business'  => $business,
+            'timetable' => $timetable,
+            'mode'      => 'show',
+        ]);
     }
 
-    public function update(Business $business, Request $request, VacancyParser $vacancyParser)
+    public function update(Business $business, StoreVacancyRequest $request, VacancyParser $vacancyParser): JsonResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageVacancies', $business);
 
-        // BEGIN
+        $validated = $request->validated();
 
-        $serviceId = $request->input('serviceId');
-        $weekdays = $request->input('weekdays');
+        $serviceId = $validated['serviceId'];
+        $weekdays = $validated['weekdays'];
 
-        logger()->info($weekdays);
+        logger()->info(json_encode($weekdays));
 
-        $service = $business->services()->find($serviceId);
-        $humanResource = $business->humanresources()->first();
+        $service = $business->services()->findOrFail($serviceId);
+        $humanResource = $business->humanresources()->firstOrFail();
 
         $startAt = $business->pref('start_at');
         $finishAt = $business->pref('finish_at');
@@ -260,9 +225,7 @@ class BusinessVacancyController extends Controller
 
         $this->concierge->business($business);
 
-        if ($vacanciesToWipe = $business->vacancies()->where(['service_id' => $service->id])) {
-            $vacanciesToWipe->delete();
-        }
+        $business->vacancies()->where(['service_id' => $service->id])->delete();
 
         if ($this->concierge->vacancies()->updateBatch($business, $publishedVacancies)) {
             logger()->info('Vacancies updated');
@@ -271,8 +234,17 @@ class BusinessVacancyController extends Controller
         return response()->json(['status' => 'OK']);
     }
 
-    protected function buildStatements(Service $service, HumanResource $humanResource, $weekdays, $startAt, $finishAt, $timezone)
-    {
+    /**
+     * @param  array<string, mixed>  $weekdays
+     */
+    protected function buildStatements(
+        Service $service,
+        Humanresource $humanResource,
+        array $weekdays,
+        string $startAt,
+        string $finishAt,
+        string $timezone
+    ): string {
         $out = [];
 
         $out[] = "{$service->slug}:{$humanResource->slug}";
@@ -288,12 +260,12 @@ class BusinessVacancyController extends Controller
         return implode("\n", $out);
     }
 
-    protected function getActiveLanguage($locale)
+    protected function getActiveLanguage(string $locale): string
     {
         return session()->get('language', substr($locale, 0, 2));
     }
 
-    protected function rememberStatements($businessId, $statements)
+    protected function rememberStatements(int $businessId, string $statements): bool
     {
         return Storage::put(
             $this->getStatementsFile($businessId),
@@ -301,18 +273,16 @@ class BusinessVacancyController extends Controller
         );
     }
 
-    protected function recallStatements($businessId)
+    protected function recallStatements(int $businessId): ?string
     {
-        if (!Storage::exists($this->getStatementsFile($businessId))) {
-            return;
+        if (! Storage::exists($this->getStatementsFile($businessId))) {
+            return null;
         }
 
-        return Storage::get(
-            $this->getStatementsFile($businessId)
-        );
+        return Storage::get($this->getStatementsFile($businessId));
     }
 
-    protected function getStatementsFile($businessId)
+    protected function getStatementsFile(int $businessId): string
     {
         return 'business'.DIRECTORY_SEPARATOR.$businessId.DIRECTORY_SEPARATOR.'vacancy-statements.txt';
     }

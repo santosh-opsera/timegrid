@@ -1,54 +1,57 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class UserPreferencesController extends Controller
 {
-    public function getPreferences()
+    public function getPreferences(): Response
     {
         logger()->info(__METHOD__);
-
-        // BEGIN
 
         $parameters = config()->get('preferences.App\Models\User');
         $preferences = auth()->user()->preferences;
 
-        return view('user.preferences.edit', compact('preferences', 'parameters'));
+        return Inertia::render('Profile/Edit', [
+            'preferences' => $preferences,
+            'parameters'  => $parameters,
+        ]);
     }
 
-    public function postPreferences(Request $request)
+    public function postPreferences(Request $request): RedirectResponse
     {
         logger()->info(__METHOD__);
 
-        // BEGIN
+        $parameters = config()->get('preferences.App\Models\User');
+        $parameterKeys = array_flip(array_keys($parameters));
+        $validated = array_intersect_key($request->validate(
+            collect($parameters)->mapWithKeys(fn (array $config, string $key): array => [
+                $key => $this->preferenceRule($config),
+            ])->all()
+        ), $parameterKeys);
 
-        $this->setUserPreferences($request->all());
+        $this->setUserPreferences($validated);
 
         flash()->success(trans('user.msg.preferences.success'));
 
         return redirect()->back();
     }
 
-    /////////////
-    // HELPERS //
-    /////////////
-
-    protected function setUserPreferences($preferences)
+    /**
+     * @param  array<string, mixed>  $preferences
+     */
+    protected function setUserPreferences(array $preferences): void
     {
-        // Get parameters from app configuration
         $parameters = config()->get('preferences.App\Models\User');
 
-        // Get the keys of the parameters
-        $parametersKeys = array_flip(array_keys($parameters));
-
-        // Merge the user input with the parameter keys
-        $mergedPreferences = array_intersect_key($preferences, $parametersKeys);
-
-        foreach ($mergedPreferences as $key => $value) {
+        foreach ($preferences as $key => $value) {
             logger()->info(sprintf(
                 "set preference: UserId:%s key:%s='%s' type:%s",
                 auth()->user()->id,
@@ -59,5 +62,18 @@ class UserPreferencesController extends Controller
 
             auth()->user()->pref($key, $value, $parameters[$key]['type']);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return list<string>
+     */
+    private function preferenceRule(array $config): array
+    {
+        return match ($config['type'] ?? 'string') {
+            'boolean' => ['nullable', 'boolean'],
+            'integer' => ['nullable', 'integer'],
+            default   => ['nullable', 'string', 'max:255'],
+        };
     }
 }

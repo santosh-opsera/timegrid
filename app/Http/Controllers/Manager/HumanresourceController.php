@@ -1,27 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 use Timegridio\Concierge\Models\Business;
 use Timegridio\Concierge\Models\Humanresource;
 
 class HumanresourceController extends Controller
 {
-    public function index(Business $business)
+    public function index(Business $business): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        $humanresources = $business->humanresources;
+        $humanresources = $business->humanresources()->get();
 
-        return view('manager.businesses.humanresources.index', compact('business', 'humanresources'));
+        return Inertia::render('Business/Staff/Index', [
+            'business'       => $business,
+            'humanresources' => $humanresources,
+        ]);
     }
 
-    public function create(Business $business)
+    public function create(Business $business): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
@@ -34,25 +42,29 @@ class HumanresourceController extends Controller
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
+        $humanresource = new Humanresource();
 
-        $humanresource = new Humanresource(); // For Form Model Binding
-        return view('manager.businesses.humanresources.create', compact('business', 'humanresource'));
+        return Inertia::render('Business/Staff/Create', [
+            'business'      => $business,
+            'humanresource' => $humanresource,
+        ]);
     }
 
-    public function store(Business $business, Request $request)
+    public function store(Business $business, Request $request): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s', $business->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
+        $validated = $request->validate([
+            'name'           => ['required', 'string', 'min:2', 'max:255'],
+            'capacity'       => ['required', 'integer', 'min:1'],
+            'calendar_link'  => ['nullable', 'string', 'max:500'],
+        ]);
 
-        $humanresource = new Humanresource($request->all());
-
+        $humanresource = new Humanresource($validated);
         $humanresource->business()->associate($business->id);
-
         $humanresource->save();
 
         flash()->success(trans('manager.humanresources.msg.store.success'));
@@ -60,40 +72,46 @@ class HumanresourceController extends Controller
         return redirect()->route('manager.business.humanresource.show', [$business, $humanresource]);
     }
 
-    public function show(Business $business, Humanresource $humanresource)
+    public function show(Business $business, Humanresource $humanresource): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s humanresourceId:%s', $business->id, $humanresource->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
-
-        return view('manager.businesses.humanresources.show', compact('business', 'humanresource'));
+        return Inertia::render('Business/Staff/Show', [
+            'business'      => $business,
+            'humanresource' => $humanresource,
+        ]);
     }
 
-    public function edit(Business $business, Humanresource $humanresource)
+    public function edit(Business $business, Humanresource $humanresource): Response
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s humanresourceId:%s', $business->id, $humanresource->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
-
-        return view('manager.businesses.humanresources.edit', compact('business', 'humanresource'));
+        return Inertia::render('Business/Staff/Edit', [
+            'business'      => $business,
+            'humanresource' => $humanresource,
+        ]);
     }
 
-    public function update(Business $business, Humanresource $humanresource, Request $request)
+    public function update(Business $business, Humanresource $humanresource, Request $request): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s humanresourceId:%s', $business->id, $humanresource->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
+        $validated = $request->validate([
+            'name'           => ['required', 'string', 'min:2', 'max:255'],
+            'capacity'       => ['required', 'integer', 'min:1'],
+            'calendar_link'  => ['nullable', 'string', 'max:500'],
+        ]);
 
-        $humanresource->fill($request->all());
+        $humanresource->fill($validated);
         $humanresource->save();
 
         flash()->success(trans('manager.humanresources.msg.update.success'));
@@ -101,16 +119,14 @@ class HumanresourceController extends Controller
         return redirect()->route('manager.business.humanresource.show', [$business, $humanresource]);
     }
 
-    public function destroy(Business $business, Humanresource $humanresource)
+    public function destroy(Business $business, Humanresource $humanresource): RedirectResponse
     {
         logger()->info(__METHOD__);
         logger()->info(sprintf('businessId:%s humanresourceId:%s', $business->id, $humanresource->id));
 
         $this->authorize('manageHumanresources', $business);
 
-        // BEGIN //
-
-        $humanresource = $humanresource->delete();
+        $humanresource->delete();
 
         flash()->success(trans('manager.humanresources.msg.destroy.success'));
 

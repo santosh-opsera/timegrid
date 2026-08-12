@@ -1,22 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
 
-/*******************************************************************************
- * The Wizard will present either a guided step-by-step configuration for
- * businesses owners, or business directory listing for new users acting as
- * customers. It will also send them to default views if they are regular users.
- ******************************************************************************/
 class WizardController extends Controller
 {
-    /**
-     * get home page for old users and wizard for new users.
-     *
-     * @return Response Rendered view of Wizard or Redirect
-     */
-    public function getWizard()
+    public function getWizard(): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
 
@@ -38,64 +33,48 @@ class WizardController extends Controller
             return redirect()->route('user.dashboard');
         }
 
-        return view('wizard');
+        return Inertia::render('Dashboard');
     }
 
-    /**
-     * get Dashboard page.
-     *
-     * @return Response Rendered view for Wizard
-     */
-    public function getDashboard()
+    public function getDashboard(): Response
     {
         logger()->info(__METHOD__);
 
-        //////////////////
-        // FOR REFACTOR //
-        //////////////////
-
-        $appointments = auth()->user()->appointments()->orderBy('start_at')->unarchived()->get();
+        $appointments = auth()->user()
+            ->appointments()
+            ->with(['business', 'service', 'contact'])
+            ->orderBy('start_at')
+            ->unarchived()
+            ->get();
 
         $appointmentsCount = $appointments->count();
+        $subscriptionsCount = auth()->user()->contacts()->count();
 
-        $subscriptionsCount = auth()->user()->contacts->count();
-
-        return view('user.dashboard', compact('appointments', 'appointmentsCount', 'subscriptionsCount'));
+        return Inertia::render('Dashboard', [
+            'appointments'         => $appointments,
+            'appointmentsCount'    => $appointmentsCount,
+            'subscriptionsCount'   => $subscriptionsCount,
+        ]);
     }
 
-    /**
-     * get Welcome page.
-     *
-     * @return Response Rendered view for Wizard
-     */
-    public function getWelcome()
+    public function getWelcome(): Response
     {
         logger()->info(__METHOD__);
 
-        return view('wizard');
+        return Inertia::render('Dashboard');
     }
 
-    /**
-     * get Pricing.
-     *
-     * @return Response Returns pricing table
-     */
-    public function getPricing()
+    public function getPricing(): Response
     {
         logger()->info(__METHOD__);
 
-        return view('manager.pricing');
+        return Inertia::render('Manager/Pricing');
     }
 
-    /**
-     * get Terms and Conditions.
-     *
-     * @return Response Rendered view for Terms and Conditions of use
-     */
-    public function getTerms()
+    public function getTerms(): Response
     {
         logger()->info(__METHOD__);
 
-        return view('manager.terms');
+        return Inertia::render('Manager/Terms');
     }
 }

@@ -1,63 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\API;
 
 use App\Events\AppointmentWasCanceled;
 use App\Events\AppointmentWasConfirmed;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlterAppointmentRequest;
+use Illuminate\Http\JsonResponse;
 use Timegridio\Concierge\Concierge;
 use Timegridio\Concierge\Models\Appointment;
 use Timegridio\Concierge\Models\Business;
 
 class BookingController extends Controller
 {
-    /**
-     * Concierge service implementation.
-     *
-     * @var Timegridio\Concierge\Concierge
-     */
-    private $concierge;
+    public function __construct(
+        private readonly Concierge $concierge
+    ) {}
 
-    /**
-     * Create controller.
-     *
-     * @param Timegridio\Concierge\Concierge
-     */
-    public function __construct(Concierge $concierge)
-    {
-        parent::__construct();
-
-        $this->concierge = $concierge;
-    }
-
-    /**
-     * post Action for booking.
-     *
-     * @param AlterAppointmentRequest $request
-     *
-     * @return JSON Action result object
-     */
-    public function postAction(AlterAppointmentRequest $request)
+    public function postAction(AlterAppointmentRequest $request): JsonResponse
     {
         logger()->info(__METHOD__);
 
-        //////////////////
-        // FOR REFACOTR //
-        //////////////////
+        $validated = $request->validated();
 
         $issuer = auth()->user();
-        $business = Business::findOrFail($request->input('business'));
-        $appointment = Appointment::findOrFail($request->input('appointment'));
-        $action = $request->input('action');
-        $widgetType = $request->input('widget');
-
-        /////////////////////////////////////////////
-        // AUTHORIZATION : AlterAppointmentRequest //
-        /////////////////////////////////////////////
-        //  (A) auth()->user() is owner of $business
-        // OR
-        //  (B) auth()->user() is issuer of $appointment
+        $business = Business::findOrFail($validated['business']);
+        $appointment = Appointment::with(['contact', 'service', 'business'])
+            ->findOrFail($validated['appointment']);
+        $action = $validated['action'];
+        $widgetType = $validated['widget'];
 
         logger()->info(sprintf(
             'postAction.request:[issuer:%s, action:%s, business:%s, appointment:%s]',
@@ -83,18 +56,16 @@ class BookingController extends Controller
             case 'serve':
                 $appointment = $appointmentManager->serve();
                 break;
-            default:
-                # code...
-                break;
         }
 
+        $appointment->load(['contact', 'service', 'business']);
+
         $contents = [
-            'appointment' => $appointment->load('contact'),
+            'appointment' => $appointment,
             'user'        => auth()->user(),
-            ];
+        ];
 
         $viewKey = "widgets.appointment.{$widgetType}._body";
-        // Widgets MUST be rendered before being returned on Response as they need to be interpreted as HTML
         $html = view($viewKey, $contents)->render();
         $code = 'OK';
 
