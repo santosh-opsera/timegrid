@@ -8,11 +8,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Timegridio\Concierge\Concierge;
 use Timegridio\Concierge\Models\Business;
 use Timegridio\Concierge\Models\Domain;
 
 class BusinessController extends Controller
 {
+    public function __construct(
+        private readonly Concierge $concierge
+    ) {}
+
     public function getHome(string $slug): Response|RedirectResponse
     {
         logger()->info(__METHOD__);
@@ -23,10 +28,20 @@ class BusinessController extends Controller
         }
 
         if ($business = Business::with(['services', 'category'])->where('slug', $slug)->first()) {
+            if (auth()->check()) {
+                return redirect()->route('user.businesses.home', ['business' => $business->slug]);
+            }
+
             session()->put('guest.last-intended-business-home', $slug);
 
+            $conciergeInstance = $this->concierge->business($business);
+            $available = $conciergeInstance->isBookable('today', 14);
+            $availability = $conciergeInstance->vacancies()->generateAvailability('today', 14);
+
             return Inertia::render('Booking/Show', [
-                'business' => $business,
+                'business'     => $business,
+                'available'    => $available,
+                'availability' => $availability,
             ]);
         }
 

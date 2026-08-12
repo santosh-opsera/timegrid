@@ -14,13 +14,14 @@ export default function BookingShow({
     business,
     appointment,
     available,
+    availability,
 }: BookingShowPageProps) {
     const route = useRoute();
     const { auth } = usePage().props;
 
     // Public business page (guest/user business home)
     if (business && !appointment) {
-        return <PublicBusinessShow business={business} available={available} />;
+        return <PublicBusinessShow business={business} available={available} availability={availability} />;
     }
 
     const Layout = auth.user ? AuthenticatedLayout : GuestLayout;

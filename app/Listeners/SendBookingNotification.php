@@ -44,13 +44,14 @@ class SendBookingNotification
             return;
         }
 
-        /////////////////
-        // Send emails //
-        /////////////////
-
-        $this->sendEmailToContactUser($event);
-
-        $this->sendEmailToOwner($event);
+        try {
+            $this->sendEmailToContactUser($event);
+            $this->sendEmailToOwner($event);
+        } catch (\Throwable $e) {
+            logger()->warning('Failed to send booking notification email', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     protected function sendEmailToContactUser($event)

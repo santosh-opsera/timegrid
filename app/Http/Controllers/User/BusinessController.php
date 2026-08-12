@@ -33,18 +33,26 @@ class BusinessController extends Controller
             ));
         }
 
-        $available = $this->concierge->business($business)->isBookable('today', 30);
+        $conciergeInstance = $this->concierge->business($business);
+        $available = $conciergeInstance->isBookable('today', 14);
 
-        $appointment = $business->bookings()
-            ->with(['contact', 'service'])
-            ->forContacts(auth()->user()->contacts)
-            ->active()
-            ->first();
+        $availability = $conciergeInstance->vacancies()
+            ->generateAvailability('today', 14);
+
+        $appointment = null;
+        if (auth()->user()) {
+            $appointment = $business->bookings()
+                ->with(['contact', 'service'])
+                ->forContacts(auth()->user()->contacts)
+                ->active()
+                ->first();
+        }
 
         return Inertia::render('Booking/Show', [
-            'business'    => $business,
-            'available'   => $available,
-            'appointment' => $appointment,
+            'business'     => $business,
+            'available'    => $available,
+            'availability' => $availability,
+            'appointment'  => $appointment,
         ]);
     }
 

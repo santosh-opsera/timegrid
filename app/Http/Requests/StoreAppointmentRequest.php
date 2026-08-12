@@ -22,7 +22,7 @@ class StoreAppointmentRequest extends FormRequest
             'businessId'  => ['required', 'integer', 'exists:businesses,id'],
             'service_id'  => ['required', 'integer', 'exists:services,id'],
             '_date'       => ['required', 'date', 'after_or_equal:today'],
-            '_time'       => ['required', 'date_format:H:i:s'],
+            '_time'       => ['required', 'date_format:H:i'],
             '_timezone'   => ['nullable', 'timezone:all'],
             'comments'    => ['nullable', 'string', 'max:1000'],
             'contact_id'  => ['nullable', 'integer', 'exists:contacts,id'],

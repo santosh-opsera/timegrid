@@ -54,12 +54,10 @@ class AgendaController extends Controller
 
                 $contact = $business->contacts()->find($behalfOfId);
             } else {
-                if (! $contact = auth()->user()->getContactSubscribedTo($business->id)) {
-                    logger()->info('  [ADVICE] User not subscribed to Business');
+                $contact = auth()->user()->getContactSubscribedTo($business->id);
 
-                    session()->flash('warning', trans('user.booking.msg.you_are_not_subscribed_to_business'));
-
-                    return redirect()->route('user.businesses.home', compact('business'));
+                if (! $contact) {
+                    $contact = $this->autoSubscribeUser(auth()->user(), $business);
                 }
             }
 
@@ -92,7 +90,7 @@ class AgendaController extends Controller
 
         $endDate = $startFromDate->copy()->addDays($days);
 
-        $business->load(['services.servicetype']);
+        $business->load(['services']);
 
         return Inertia::render('Booking/Book', [
             'business'      => $business,
@@ -263,6 +261,35 @@ class AgendaController extends Controller
     protected function getActiveLanguage(string $locale): string
     {
         return session()->get('language', substr($locale, 0, 2));
+    }
+
+    protected function autoSubscribeUser(User $user, Business $business): Contact
+    {
+        $contact = Contact::query()->where('user_id', $user->id)->first();
+
+        if (! $contact) {
+            $nameParts = explode(' ', $user->name, 2);
+            $contact = Contact::query()->create([
+                'user_id'   => $user->id,
+                'firstname' => $nameParts[0] ?? $user->name,
+                'lastname'  => $nameParts[1] ?? '',
+                'email'     => $user->email,
+                'gender'    => 'X',
+            ]);
+        }
+
+        if (! $contact->isSubscribedTo($business->id)) {
+            $business->contacts()->attach($contact->id);
+            $contact->load('businesses');
+        }
+
+        logger()->info('Auto-subscribed user to business', [
+            'user_id'     => $user->id,
+            'contact_id'  => $contact->id,
+            'business_id' => $business->id,
+        ]);
+
+        return $contact;
     }
 
     protected function sanitizeDate(string $dateString): Carbon

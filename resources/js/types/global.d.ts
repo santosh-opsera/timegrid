@@ -127,4 +127,5 @@ export interface BookingShowPageProps {
     business?: Business;
     appointment?: Appointment;
     available?: boolean;
+    availability?: Record<string, string[]>;
 }

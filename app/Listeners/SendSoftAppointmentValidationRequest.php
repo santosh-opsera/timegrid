@@ -36,26 +36,28 @@ class SendSoftAppointmentValidationRequest
             return;
         }
 
-        ////////////////////////////////////////////////////
-        // Send Soft Appointment Validation Request Email //
-        ////////////////////////////////////////////////////
+        try {
+            $params = [
+                'appointment'  => $event->appointment,
+                'link'         => $this->generateLink($businessSlug, $code, $email),
+                'businessName' => $businessName,
+            ];
+            $header = [
+                'name'  => $event->appointment->contact->firstname,
+                'email' => $email,
+            ];
 
-        $params = [
-            'appointment'  => $event->appointment,
-            'link'         => $this->generateLink($businessSlug, $code, $email),
-            'businessName' => $businessName,
-        ];
-        $header = [
-            'name'  => $event->appointment->contact->firstname,
-            'email' => $email,
-        ];
-
-        return $this->transmail
-                    ->locale($locale)
-                    ->timezone($timezone)
-                    ->template('guest.appointment-validation.validation')
-                    ->subject('guest.appointment-validation.subject', compact('businessName'))
-                    ->send($header, $params);
+            return $this->transmail
+                        ->locale($locale)
+                        ->timezone($timezone)
+                        ->template('guest.appointment-validation.validation')
+                        ->subject('guest.appointment-validation.subject', compact('businessName'))
+                        ->send($header, $params);
+        } catch (\Throwable $e) {
+            logger()->warning('Failed to send soft appointment validation email', [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     protected function generateLink($business, $code, $email)

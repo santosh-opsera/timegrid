@@ -1,8 +1,8 @@
 import { Card, PageHeader } from '@/Components/UI';
 import GuestLayout from '@/Layouts/GuestLayout';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useRoute from '@/Hooks/useRoute';
-import { BusinessShowPageProps } from '@/types/global';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarDaysIcon,
     ClockIcon,
@@ -10,23 +10,48 @@ import {
     PhoneIcon,
     WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
-import { format, addDays, startOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, parseISO, isSameDay } from 'date-fns';
 import { useState } from 'react';
+
+interface PublicShowProps {
+    business: Record<string, unknown> & {
+        slug: string;
+        name: string;
+        description?: string;
+        postal_address?: string;
+        phone?: string;
+        category?: { slug: string };
+        services?: Array<{
+            id: number;
+            name: string;
+            description?: string;
+            duration?: number;
+            price?: number;
+            color?: string;
+        }>;
+    };
+    available?: boolean;
+    availability?: Record<string, string[]>;
+}
 
 export default function PublicBusinessShow({
     business,
     available = true,
-}: BusinessShowPageProps) {
+    availability = {},
+}: PublicShowProps) {
     const route = useRoute();
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const { auth } = usePage().props;
+    const Layout = (auth as Record<string, unknown>)?.user ? AuthenticatedLayout : GuestLayout;
 
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
+    const availableDates = Object.keys(availability);
+    const [selectedDateStr, setSelectedDateStr] = useState(availableDates[0] ?? '');
 
-    const sampleSlots = ['09:00', '09:30', '10:00', '10:30', '11:00', '14:00', '14:30', '15:00'];
+    const slotsForDate = selectedDateStr ? (availability[selectedDateStr] ?? []) : [];
+
+    const visibleDates = availableDates.slice(0, 7);
 
     return (
-        <GuestLayout>
+        <Layout>
             <Head title={business.name} />
 
             <div className="relative overflow-hidden bg-linear-to-br from-brand-600 via-brand-500 to-blue-500">
@@ -107,39 +132,47 @@ export default function PublicBusinessShow({
                     <div>
                         <Card>
                             <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Available times</h2>
-                            {!available ? (
+                            {!available || availableDates.length === 0 ? (
                                 <p className="text-sm text-slate-500">No availability at the moment. Please check back later.</p>
                             ) : (
                                 <>
                                     <div className="mb-4 grid grid-cols-7 gap-1">
-                                        {weekDays.map((day) => (
-                                            <button
-                                                key={day.toISOString()}
-                                                type="button"
-                                                onClick={() => setSelectedDate(day)}
-                                                className={`rounded-lg p-2 text-center text-xs transition ${
-                                                    isSameDay(day, selectedDate)
-                                                        ? 'bg-brand-600 text-white'
-                                                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
-                                                }`}
-                                                aria-label={format(day, 'EEEE, MMMM d')}
-                                                aria-pressed={isSameDay(day, selectedDate)}
-                                            >
-                                                <div className="font-medium">{format(day, 'EEE')}</div>
-                                                <div>{format(day, 'd')}</div>
-                                            </button>
-                                        ))}
+                                        {visibleDates.map((dateStr) => {
+                                            const day = parseISO(dateStr);
+                                            const isSelected = dateStr === selectedDateStr;
+                                            return (
+                                                <button
+                                                    key={dateStr}
+                                                    type="button"
+                                                    onClick={() => setSelectedDateStr(dateStr)}
+                                                    className={`rounded-lg p-2 text-center text-xs transition ${
+                                                        isSelected
+                                                            ? 'bg-brand-600 text-white'
+                                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                    }`}
+                                                    aria-label={format(day, 'EEEE, MMMM d')}
+                                                    aria-pressed={isSelected}
+                                                >
+                                                    <div className="font-medium">{format(day, 'EEE')}</div>
+                                                    <div>{format(day, 'd')}</div>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
-                                        {sampleSlots.map((slot) => (
-                                            <Link
-                                                key={slot}
-                                                href={route('user.booking.book', { business: business.slug, date: format(selectedDate, 'yyyy-MM-dd'), time: slot }) as string}
-                                                className="rounded-lg border border-slate-200 py-2 text-center text-sm font-medium transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:hover:border-brand-500 dark:hover:bg-brand-950"
-                                            >
-                                                {slot}
-                                            </Link>
-                                        ))}
+                                        {slotsForDate.length === 0 ? (
+                                            <p className="col-span-3 py-4 text-center text-sm text-slate-400">No slots for this day</p>
+                                        ) : (
+                                            slotsForDate.map((slot) => (
+                                                <Link
+                                                    key={slot}
+                                                    href={route('user.booking.book', { business: business.slug }) as string}
+                                                    className="rounded-lg border border-slate-200 py-2 text-center text-sm font-medium transition hover:border-brand-500 hover:bg-brand-50 hover:text-brand-700 dark:border-slate-700 dark:hover:border-brand-500 dark:hover:bg-brand-950"
+                                                >
+                                                    {slot}
+                                                </Link>
+                                            ))
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -147,6 +180,6 @@ export default function PublicBusinessShow({
                     </div>
                 </div>
             </div>
-        </GuestLayout>
+        </Layout>
     );
 }

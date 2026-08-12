@@ -156,23 +156,59 @@ class VacancyManager
     }
 
     /**
-     * @return array<string, array<string, Vacancy>>
+     * @return array<string, list<string>>
      */
     public function generateAvailability(string $startDate = 'today', int $futureDays = 10): array
     {
+        $start = Carbon::parse($startDate);
+        $end = $start->copy()->addDays($futureDays);
+
+        $vacancies = $this->business->vacancies()
+            ->with('service')
+            ->where('date', '>=', $start->toDateString())
+            ->where('date', '<', $end->toDateString())
+            ->orderBy('date')
+            ->orderBy('start_at')
+            ->get();
+
         $dates = [];
 
         for ($i = 0; $i < $futureDays; $i++) {
-            $dates[Carbon::parse("{$startDate} +{$i} days")->toDateString()] = [];
+            $dates[$start->copy()->addDays($i)->toDateString()] = [];
         }
 
-        foreach ($this->business->vacancies as $vacancy) {
+        foreach ($vacancies as $vacancy) {
             $dateKey = $vacancy->date instanceof Carbon
                 ? $vacancy->date->toDateString()
                 : (string) $vacancy->date;
 
-            if (array_key_exists($dateKey, $dates)) {
-                $dates[$dateKey][$vacancy->service->slug] = $vacancy;
+            if (! array_key_exists($dateKey, $dates)) {
+                continue;
+            }
+
+            $rawStart = $vacancy->getRawOriginal('start_at');
+            $rawEnd = $vacancy->getRawOriginal('finish_at');
+
+            $slotStart = Carbon::parse($rawStart);
+            $slotEnd = Carbon::parse($rawEnd);
+
+            $duration = max((int) ($vacancy->service?->duration ?? 30), 15);
+
+            $cursor = $slotStart->copy();
+            while ($cursor->copy()->addMinutes($duration)->lte($slotEnd)) {
+                $timeStr = $cursor->format('H:i');
+                if (! in_array($timeStr, $dates[$dateKey], true)) {
+                    $dates[$dateKey][] = $timeStr;
+                }
+                $cursor->addMinutes($duration);
+            }
+        }
+
+        foreach ($dates as $dateKey => $slots) {
+            if ($slots === []) {
+                unset($dates[$dateKey]);
+            } else {
+                sort($dates[$dateKey]);
             }
         }
 
