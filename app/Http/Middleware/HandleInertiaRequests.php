@@ -19,13 +19,19 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $locale = App::getLocale();
+        $isBusinessOwner = $user ? $user->businesses()->exists() : false;
 
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $user,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $isBusinessOwner ? 'owner' : 'customer',
+                ] : null,
                 'can' => $user ? [
-                    'manage_businesses' => $user->role !== \App\Enums\UserRole::Customer,
+                    'manage_businesses' => $isBusinessOwner,
                 ] : [],
             ],
             'flash' => [
@@ -47,7 +53,7 @@ class HandleInertiaRequests extends Middleware
     {
         $path = lang_path("{$locale}.json");
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             $path = lang_path('en.json');
         }
 
