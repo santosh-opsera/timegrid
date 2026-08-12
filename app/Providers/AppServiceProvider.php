@@ -10,6 +10,7 @@ use App\Observers\AuditObserver;
 use App\Policies\BusinessPolicy;
 use App\Policies\ContactPolicy;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Timegridio\Concierge\Models\Appointment;
 use Timegridio\Concierge\Models\Business;
@@ -48,6 +49,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         Gate::policy(Business::class, BusinessPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
 
