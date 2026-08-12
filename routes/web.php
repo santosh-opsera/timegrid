@@ -35,6 +35,15 @@ use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show'])
     ->middleware('web');
 
+Route::get('/health', function () {
+    require_once base_path('scripts/health-check.php');
+
+    $result = perform_health_check();
+    $statusCode = $result['status'] === 'healthy' ? 200 : 503;
+
+    return response()->json($result, $statusCode);
+})->name('health');
+
 //////////////////
 // ROOT CONTEXT //
 //////////////////

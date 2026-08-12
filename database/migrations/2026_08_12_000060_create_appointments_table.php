@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('contact_id')->constrained()->cascadeOnDelete();
             $table->foreignId('business_id')->constrained()->cascadeOnDelete();
             $table->foreignId('service_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('humanresource_id')->nullable()->constrained('humanresources')->nullOnDelete();
             $table->unsignedBigInteger('vacancy_id')->nullable()->index();
             $table->timestamp('start_at')->nullable()->index();
             $table->timestamp('finish_at')->nullable()->index();
