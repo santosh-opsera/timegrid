@@ -6,7 +6,8 @@ FROM node:20-slim AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --force
+RUN npm ci --include=optional || npm install
+RUN npm install lightningcss-linux-x64-gnu@1.32.0
 
 COPY vite.config.js tsconfig.json ./
 COPY resources ./resources
