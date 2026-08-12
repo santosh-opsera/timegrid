@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AppointmentStatus;
-use App\Enums\UserRole;
 use App\Models\Appointment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,16 +12,17 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $user->loadMissing('businesses');
-        $isOwner = $user->role !== UserRole::Customer;
 
-        $businesses = $isOwner
-            ? $user->ownedBusinesses()->withCount(['services', 'contacts', 'appointments'])->get()
-            : collect();
+        $businesses = $user->ownedBusinesses()->get();
+        foreach ($businesses as $business) {
+            $business->loadCount(['services', 'appointments']);
+            $business->contacts_count = $business->contacts()->count();
+        }
 
+        $isOwner = $businesses->isNotEmpty();
         $canceled = AppointmentStatus::Canceled->value;
 
-        if ($isOwner && $businesses->isNotEmpty()) {
+        if ($isOwner) {
             $businessIds = $businesses->pluck('id');
 
             $upcomingAppointments = Appointment::whereIn('business_id', $businessIds)

@@ -44,15 +44,15 @@ class User extends Authenticatable
 
     public function getRoleAttribute(mixed $value): UserRole
     {
-        if (is_string($value) && $value !== '') {
-            return UserRole::tryFrom($value) ?? UserRole::Customer;
+        if (is_string($value) && in_array($value, ['root', 'owner', 'staff', 'customer'], true)) {
+            return UserRole::from($value);
         }
 
-        if ($this->relationLoaded('businesses')) {
-            return $this->businesses->isNotEmpty() ? UserRole::Owner : UserRole::Customer;
+        if ($this->businesses()->exists()) {
+            return UserRole::Owner;
         }
 
-        return $this->businesses()->exists() ? UserRole::Owner : UserRole::Customer;
+        return UserRole::Customer;
     }
 
     public function isRoot(): bool

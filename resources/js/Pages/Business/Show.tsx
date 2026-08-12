@@ -17,16 +17,43 @@ interface Props {
 function statusBadgeClass(status: string): string {
     switch (status) {
         case 'reserved':
+        case 'R':
             return 'bg-amber-100 text-amber-800';
         case 'confirmed':
+        case 'C':
             return 'bg-green-100 text-green-800';
         case 'canceled':
+        case 'A':
             return 'bg-red-100 text-red-800';
         case 'served':
+        case 'S':
             return 'bg-blue-100 text-blue-800';
         default:
             return 'bg-gray-100 text-gray-800';
     }
+}
+
+function statusLabel(status: string): string {
+    switch (status) {
+        case 'R':
+            return 'reserved';
+        case 'C':
+            return 'confirmed';
+        case 'A':
+            return 'canceled';
+        case 'S':
+            return 'served';
+        default:
+            return status;
+    }
+}
+
+function isReserved(status: string): boolean {
+    return status === 'reserved' || status === 'R';
+}
+
+function isConfirmed(status: string): boolean {
+    return status === 'confirmed' || status === 'C';
 }
 
 function formatDateTime(dateString: string): string {
@@ -169,11 +196,11 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                     <span
                                                         className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusBadgeClass(appointment.status)}`}
                                                     >
-                                                        {appointment.status}
+                                                        {statusLabel(appointment.status)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right text-sm">
-                                                    {appointment.status === 'reserved' && (
+                                                    {isReserved(appointment.status) && (
                                                         <button
                                                             onClick={() =>
                                                                 appointmentAction(appointment, 'confirm')
@@ -183,8 +210,8 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                             {t('common.confirm')}
                                                         </button>
                                                     )}
-                                                    {(appointment.status === 'reserved' ||
-                                                        appointment.status === 'confirmed') && (
+                                                    {(isReserved(appointment.status) ||
+                                                        isConfirmed(appointment.status)) && (
                                                         <button
                                                             onClick={() =>
                                                                 appointmentAction(appointment, 'cancel')
@@ -194,7 +221,7 @@ export default function Show({ business, stats, recentAppointments }: Props) {
                                                             {t('common.cancel')}
                                                         </button>
                                                     )}
-                                                    {appointment.status === 'confirmed' && (
+                                                    {isConfirmed(appointment.status) && (
                                                         <button
                                                             onClick={() =>
                                                                 appointmentAction(appointment, 'serve')
