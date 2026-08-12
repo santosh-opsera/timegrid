@@ -1,0 +1,57 @@
+{
+    "name": "timegridio/concierge",
+    "type": "library",
+    "description": "A Laravel reservation library for appointment booking and vacancy management",
+    "keywords": [
+        "laravel",
+        "timegrid",
+        "concierge",
+        "booking",
+        "reservation"
+    ],
+    "homepage": "https://github.com/timegridio/concierge",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ariel Vallese",
+            "email": "alariva@gmail.com",
+            "homepage": "http://timegrid.io",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^12.0",
+        "nesbot/carbon": "^3.0"
+    },
+    "require-dev": {
+        "laravel/framework": "^12.0",
+        "orchestra/testbench": "^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Timegridio\\Concierge\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Timegridio\\Concierge\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit --stop-on-failure --stop-on-error"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Timegridio\\Concierge\\TimegridioConciergeServiceProvider"
+            ],
+            "aliases": {
+                "Concierge": "Timegridio\\Concierge\\Concierge"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

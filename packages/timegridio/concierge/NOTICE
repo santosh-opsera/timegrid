@@ -1,0 +1,12 @@
+timegridio/concierge
+
+This package is a fork of the original Concierge library:
+
+  Repository: https://github.com/timegridio/concierge
+  Fork commit: 90e65c
+  License: MIT
+
+Copyright (c) Ariel Vallese and contributors.
+
+The fork has been modernized for PHP 8.4 and Laravel 12 while preserving
+the original booking-domain semantics and MIT license terms.
