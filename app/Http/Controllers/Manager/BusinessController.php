@@ -127,11 +127,18 @@ class BusinessController extends Controller
 
         $business->load(['category', 'services', 'contacts']);
 
+        $todayAppointments = $business->bookings()
+            ->with(['contact', 'service'])
+            ->ofDate($this->time->today())
+            ->orderBy('start_at')
+            ->get();
+
         return Inertia::render('Business/Show', [
-            'business'      => $business,
-            'notifications' => $notifications,
-            'boxes'         => $boxes,
-            'time'          => $time,
+            'business'          => $business,
+            'notifications'     => $notifications,
+            'boxes'             => $boxes,
+            'time'              => $time,
+            'todayAppointments' => $todayAppointments,
         ]);
     }
 

@@ -179,14 +179,21 @@ class BusinessVacancyController extends Controller
 
         $this->authorize('manageVacancies', $business);
 
-        $daysQuantity = $business->pref('vacancy_edit_days_quantity', config('root.vacancy_edit_days'));
-
-        $vacancies = $business->vacancies()->with('appointments')->get();
-
-        $timetable = $this->concierge
-            ->business($business)
-            ->timetable()
-            ->buildTimetable($vacancies, 'today', $daysQuantity);
+        $vacancies = $business->vacancies()
+            ->with(['service', 'humanresource'])
+            ->orderBy('date')
+            ->orderBy('start_at')
+            ->get()
+            ->map(fn ($v) => [
+                'id'        => $v->id,
+                'date'      => $v->date?->toDateString(),
+                'day'       => $v->date?->format('l'),
+                'start_at'  => $v->start_at?->format('H:i'),
+                'finish_at' => $v->finish_at?->format('H:i'),
+                'capacity'  => $v->capacity,
+                'service'   => $v->service?->name,
+                'staff'     => $v->humanresource?->name,
+            ]);
 
         if ($business->services()->count() === 0) {
             session()->flash('warning', trans('manager.vacancies.msg.edit.no_services'));
@@ -194,7 +201,7 @@ class BusinessVacancyController extends Controller
 
         return Inertia::render('Business/Vacancies/Index', [
             'business'  => $business,
-            'timetable' => $timetable,
+            'vacancies' => $vacancies,
             'mode'      => 'show',
         ]);
     }

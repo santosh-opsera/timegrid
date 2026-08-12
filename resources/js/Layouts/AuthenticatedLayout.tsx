@@ -45,7 +45,7 @@ export default function AuthenticatedLayout({
         { name: 'Dashboard', href: route('user.dashboard') as string, icon: HomeIcon, routeName: 'user.dashboard' },
         { name: 'My Appointments', href: route('user.agenda') as string, icon: CalendarDaysIcon, routeName: 'user.agenda' },
         { name: 'Directory', href: route('user.directory.list') as string, icon: BuildingStorefrontIcon, routeName: 'user.directory.list' },
-        { name: 'Profile', href: route('user.preferences') as string, icon: UserCircleIcon, routeName: 'user.preferences' },
+        { name: 'Profile', href: route('user.profile') as string, icon: UserCircleIcon, routeName: 'user.profile' },
     ];
 
     const routeHelper = route() as { current: (name?: string) => boolean };
@@ -190,7 +190,7 @@ export default function AuthenticatedLayout({
                                         <MenuItem>
                                             {({ focus }) => (
                                                 <Link
-                                                    href={route('user.preferences')}
+                                                    href={route('user.profile')}
                                                     className={`block rounded-lg px-3 py-2 text-sm ${focus ? 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300' : 'text-slate-700 dark:text-slate-200'}`}
                                                 >
                                                     Profile Settings

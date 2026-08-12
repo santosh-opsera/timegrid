@@ -9,10 +9,30 @@ const statusConfig: Record<
     string,
     { label: string; classes: string }
 > = {
+    r: {
+        label: 'Reserved',
+        classes:
+            'bg-brand-50 text-brand-700 ring-brand-600/20 dark:bg-brand-950/50 dark:text-brand-400',
+    },
+    reserved: {
+        label: 'Reserved',
+        classes:
+            'bg-brand-50 text-brand-700 ring-brand-600/20 dark:bg-brand-950/50 dark:text-brand-400',
+    },
+    c: {
+        label: 'Confirmed',
+        classes:
+            'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-400',
+    },
     confirmed: {
         label: 'Confirmed',
         classes:
             'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-400',
+    },
+    a: {
+        label: 'Annulled',
+        classes:
+            'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-950/50 dark:text-red-400',
     },
     pending: {
         label: 'Pending',
@@ -26,6 +46,11 @@ const statusConfig: Record<
     },
     completed: {
         label: 'Completed',
+        classes:
+            'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-950/50 dark:text-blue-400',
+    },
+    s: {
+        label: 'Served',
         classes:
             'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-950/50 dark:text-blue-400',
     },

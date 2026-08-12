@@ -52,7 +52,7 @@ class BusinessController extends Controller
     {
         logger()->info(__METHOD__);
 
-        $businesses = Business::with('category')
+        $businesses = Business::with(['category', 'services'])
             ->where('listed', true)
             ->get();
 

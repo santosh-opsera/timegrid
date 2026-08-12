@@ -61,6 +61,10 @@ export default function ManagerVacanciesIndex({
                                 const dayVacancies = vacancies.filter(
                                     (v) => v.day?.toLowerCase() === day.toLowerCase(),
                                 );
+                                const uniqueSlots = Array.from(
+                                    new Set(dayVacancies.map((v) => `${v.start_at} – ${v.finish_at}`)),
+                                );
+                                const serviceCount = new Set(dayVacancies.map((v) => v.service)).size;
                                 return (
                                     <div
                                         key={day}
@@ -70,16 +74,21 @@ export default function ManagerVacanciesIndex({
                                             <CalendarDaysIcon className="h-5 w-5 text-brand-600" aria-hidden="true" />
                                             <span className="font-medium text-slate-900 dark:text-white">{day}</span>
                                         </div>
-                                        {dayVacancies.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {dayVacancies.map((v) => (
+                                        {uniqueSlots.length > 0 ? (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                {uniqueSlots.map((slot) => (
                                                     <span
-                                                        key={v.id}
+                                                        key={slot}
                                                         className="rounded-lg bg-brand-50 px-3 py-1 text-sm font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-300"
                                                     >
-                                                        {v.start_at} – {v.finish_at}
+                                                        {slot}
                                                     </span>
                                                 ))}
+                                                {serviceCount > 0 && (
+                                                    <span className="text-xs text-slate-400">
+                                                        {serviceCount} {serviceCount === 1 ? 'service' : 'services'}
+                                                    </span>
+                                                )}
                                             </div>
                                         ) : (
                                             <span className="text-sm text-slate-400">Closed</span>

@@ -23,11 +23,14 @@ class AddressbookController extends Controller
 
         $this->authorize('manageContacts', $business);
 
-        $contacts = $business->addressbook()->listing(100);
+        $contacts = $business->contacts()
+            ->orderBy('lastname')
+            ->orderBy('firstname')
+            ->get();
 
         return Inertia::render('Business/Contacts/Index', [
             'business' => $business,
-            'contacts' => $contacts,
+            'contacts' => $contacts->values()->toArray(),
         ]);
     }
 

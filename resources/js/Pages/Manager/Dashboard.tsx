@@ -1,26 +1,49 @@
 import { Card, PageHeader, StatCard } from '@/Components/UI';
+import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useRoute from '@/Hooks/useRoute';
 import { BusinessShowPageProps } from '@/types/global';
 import { Head, Link } from '@inertiajs/react';
 import {
     CalendarDaysIcon,
-    ChartBarIcon,
+    CheckCircleIcon,
     ClockIcon,
-    CurrencyDollarIcon,
+    MinusCircleIcon,
     UserGroupIcon,
+    UsersIcon,
 } from '@heroicons/react/24/outline';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday } from 'date-fns';
+
+const BOX_ICONS = [
+    <CheckCircleIcon className="h-6 w-6" aria-hidden="true" />,
+    <MinusCircleIcon className="h-6 w-6" aria-hidden="true" />,
+    <ClockIcon className="h-6 w-6" aria-hidden="true" />,
+    <UsersIcon className="h-6 w-6" aria-hidden="true" />,
+    <UserGroupIcon className="h-6 w-6" aria-hidden="true" />,
+    <CalendarDaysIcon className="h-6 w-6" aria-hidden="true" />,
+];
+
+const BOX_COLORS: Array<'brand' | 'emerald' | 'amber' | 'blue'> = ['brand', 'emerald', 'amber', 'blue'];
+
+function translateBoxTitle(title: string): string {
+    const map: Record<string, string> = {
+        'manager.businesses.dashboard.panel.title_appointments_active': 'Active Today',
+        'manager.businesses.dashboard.panel.title_appointments_canceled': 'Cancelled Today',
+        'manager.businesses.dashboard.panel.title_contacts_subscribed': 'Subscribed',
+        'manager.businesses.dashboard.panel.title_contacts_registered': 'Registered',
+        'manager.businesses.dashboard.panel.title_appointments_total': 'Total Appointments',
+    };
+    return map[title] ?? title;
+}
 
 export default function ManagerDashboard({
     business,
     boxes = [],
     notifications = [],
+    todayAppointments = [],
     time,
 }: BusinessShowPageProps) {
     const route = useRoute();
-
-    const todayAgenda = (business.contacts ?? []).slice(0, 5);
 
     return (
         <AuthenticatedLayout
@@ -45,15 +68,15 @@ export default function ManagerDashboard({
                 }
             />
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {boxes.length > 0 ? (
-                    boxes.map((box, i) => (
+                    boxes.map((box: Record<string, unknown>, i: number) => (
                         <StatCard
-                            key={box.label}
-                            label={box.label}
-                            value={box.value}
-                            icon={<ChartBarIcon className="h-6 w-6" aria-hidden="true" />}
-                            color={(['brand', 'emerald', 'amber', 'blue'] as const)[i % 4]}
+                            key={i}
+                            label={translateBoxTitle((box.title as string) ?? (box.label as string) ?? '')}
+                            value={(box.number as number) ?? (box.value as number) ?? 0}
+                            icon={BOX_ICONS[i % BOX_ICONS.length]}
+                            color={BOX_COLORS[i % BOX_COLORS.length]}
                         />
                     ))
                 ) : (
@@ -61,7 +84,6 @@ export default function ManagerDashboard({
                         <StatCard label="Today's appointments" value={0} icon={<CalendarDaysIcon className="h-6 w-6" aria-hidden="true" />} color="brand" />
                         <StatCard label="Total contacts" value={business.contacts?.length ?? 0} icon={<UserGroupIcon className="h-6 w-6" aria-hidden="true" />} color="emerald" />
                         <StatCard label="Services" value={business.services?.length ?? 0} icon={<ClockIcon className="h-6 w-6" aria-hidden="true" />} color="blue" />
-                        <StatCard label="Revenue" value="$—" icon={<CurrencyDollarIcon className="h-6 w-6" aria-hidden="true" />} color="amber" trend="Coming soon" />
                     </>
                 )}
             </div>
@@ -77,19 +99,27 @@ export default function ManagerDashboard({
                             View all
                         </Link>
                     </div>
-                    {todayAgenda.length === 0 ? (
+                    {todayAppointments.length === 0 ? (
                         <p className="py-8 text-center text-sm text-slate-500">No appointments scheduled for today.</p>
                     ) : (
                         <ul className="divide-y divide-slate-100 dark:divide-slate-800" role="list">
-                            {todayAgenda.map((contact, i) => (
-                                <li key={contact.id} className="flex items-center justify-between py-4">
+                            {todayAppointments.map((appt: Record<string, unknown>) => (
+                                <li key={appt.id as number} className="flex items-center justify-between py-4">
                                     <div>
                                         <p className="font-medium text-slate-900 dark:text-white">
-                                            {contact.firstname} {contact.lastname}
+                                            {(appt.contact as Record<string, string>)?.firstname ?? ''}{' '}
+                                            {(appt.contact as Record<string, string>)?.lastname ?? ''}
                                         </p>
-                                        <p className="text-sm text-slate-500">{contact.email}</p>
+                                        <p className="text-sm text-slate-500">
+                                            {(appt.service as Record<string, string>)?.name ?? 'Appointment'}
+                                        </p>
                                     </div>
-                                    <span className="text-sm text-slate-500">{['9:00 AM', '10:30 AM', '2:00 PM'][i % 3]}</span>
+                                    <div className="flex items-center gap-3">
+                                        <StatusBadge status={(appt.status as string) ?? 'R'} />
+                                        <span className="text-sm text-slate-500">
+                                            {appt.start_at ? format(parseISO(appt.start_at as string), 'h:mm a') : ''}
+                                        </span>
+                                    </div>
                                 </li>
                             ))}
                         </ul>

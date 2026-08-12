@@ -72,7 +72,6 @@ export default function Dashboard({
                     label="Upcoming"
                     value={upcoming.length}
                     icon={<ArrowTrendingUpIcon className="h-6 w-6" aria-hidden="true" />}
-                    trend="+12% this month"
                     color="amber"
                 />
             </div>

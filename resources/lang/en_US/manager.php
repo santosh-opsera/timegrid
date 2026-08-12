@@ -122,7 +122,7 @@ return  [
         'success' => 'Business removed',
       ],
       'index' => [
-        'only_one_found' => 'You only have one business registered. Here your dashboard.',
+        'only_one_found' => 'You only have one business registered. Here is your dashboard.',
       ],
       'preferences' => [
         'success' => 'Successfully updated preferences!',

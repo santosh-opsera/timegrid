@@ -31,37 +31,37 @@ class Dashboard
             'appointments_active_today' => [
                 'icon'  => 'check',
                 'color' => 'green',
-                'title' => 'manager.businesses.dashboard.panel.title_appointments_active',
+                'title' => 'Active Today',
                 'link'  => route('manager.business.agenda.index', $this->business),
                 ],
             'appointments_canceled_today' => [
                 'icon'  => 'minus-circle',
                 'color' => 'red',
-                'title' => 'manager.businesses.dashboard.panel.title_appointments_canceled',
+                'title' => 'Cancelled Today',
                 'link'  => route('manager.business.agenda.index', $this->business),
                 ],
             'appointments_active_tomorrow' => [
                 'icon'  => 'hourglass-o',
                 'color' => 'yellow',
-                'title' => 'manager.businesses.dashboard.panel.title_appointments_active',
+                'title' => 'Active Tomorrow',
                 'link'  => route('manager.business.agenda.index', $this->business),
                 ],
             'contacts_subscribed' => [
                 'icon'  => 'users',
                 'color' => 'green',
-                'title' => 'manager.businesses.dashboard.panel.title_contacts_subscribed',
+                'title' => 'Subscribed Contacts',
                 'link'  => route('manager.addressbook.index', $this->business),
                 ],
             'contacts_registered' => [
                 'icon'  => 'users',
                 'color' => 'aqua',
-                'title' => 'manager.businesses.dashboard.panel.title_contacts_registered',
+                'title' => 'Registered Contacts',
                 'link'  => route('manager.addressbook.index', $this->business),
                 ],
             'appointments_total' => [
                 'icon'  => 'table',
                 'color' => 'aqua',
-                'title' => 'manager.businesses.dashboard.panel.title_appointments_total',
+                'title' => 'Total Appointments',
                 'link'  => route('manager.business.agenda.index', $this->business),
                 ],
         ];
