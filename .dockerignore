@@ -1,0 +1,27 @@
+# Docker build context exclusions
+
+.git
+.github
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/backups/*
+bootstrap/cache/*
+tests
+docs
+*.md
+!readme.md
+docker-compose*.yml
+Dockerfile
+.editorconfig
+.eslintrc
+.codeclimate.yml
+.phpunit.result.cache
+npm-debug.log
+.DS_Store
