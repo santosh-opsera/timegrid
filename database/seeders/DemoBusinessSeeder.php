@@ -359,7 +359,7 @@ class DemoBusinessSeeder extends Seeder
                     'gender' => $contactData['gender'],
                     'occupation' => $contactData['occupation'],
                     'birthdate' => Carbon::now()->subYears(rand(25, 55))->subDays(rand(1, 365)),
-                    'postal_address' => fake()->streetAddress().', '.fake()->city(),
+                    'postal_address' => $contactData['firstname'].' '.$contactData['lastname'].' Ave, Demo City',
                     'user_id' => $userId,
                 ]);
 
