@@ -42,11 +42,19 @@ export default function ManagerCalendar({
         return map;
     }, [calendarData.events]);
 
+    const parseBusinessTime = (iso: string) => {
+        const match = iso.match(/T(\d{2}):(\d{2})/);
+        if (match) {
+            return parseInt(match[1], 10) + parseInt(match[2], 10) / 60;
+        }
+        const parsed = parseISO(iso);
+        return parsed.getHours() + parsed.getMinutes() / 60;
+    };
+
     const getEventStyle = (event: (typeof calendarData.events)[0]) => {
-        const start = parseISO(event.start);
-        const end = parseISO(event.end);
-        const startHour = start.getHours() + start.getMinutes() / 60;
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        const startHour = parseBusinessTime(event.start);
+        const endHour = parseBusinessTime(event.end);
+        const duration = endHour - startHour;
         const top = ((startHour - 8) / 12) * 100;
         const height = (duration / 12) * 100;
         return { top: `${top}%`, height: `${Math.max(height, 8)}%`, backgroundColor: event.color ?? '#4f46e5' };
