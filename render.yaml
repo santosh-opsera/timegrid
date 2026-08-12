@@ -26,13 +26,9 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DATABASE_URL
-        fromDatabase:
-          name: timegrid-forge-db
-          property: connectionString
+        sync: false
       - key: DB_URL
-        fromDatabase:
-          name: timegrid-forge-db
-          property: connectionString
+        sync: false
       - key: SESSION_DRIVER
         value: file
       - key: SESSION_LIFETIME
@@ -57,8 +53,3 @@ services:
         value: "10000"
       - key: PHP_CLI_SERVER_WORKERS
         value: "4"
-
-databases:
-  - name: timegrid-forge-db
-    databaseName: timegrid_forge
-    plan: free
